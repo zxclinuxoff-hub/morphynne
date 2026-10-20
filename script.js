@@ -1,351 +1,354 @@
 (() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const root = document.documentElement;
-  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
-  const isSmall = innerWidth < 700;
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const mobile = innerWidth < 700 || !fine;
 
-  /* ---------- translations ---------- */
-  const T = {
-    ru: {
-      online: "ONLINE", tagline: "цифровая личность / создатель проектов",
-      bio: "Собираю идеи в проекты. Код, цифровые инструменты и немного хаоса.",
-      currentStatus: "СЕЙЧАС", message: "Написать", copyNick: "Скопировать ник",
-      copied: "Ник скопирован", copyFail: "Скопируй вручную: @morphynne",
-      musicLabel: "NOW PLAYING", trackLabel: "ТРЕК", openSC: "Открыть в SoundCloud",
-      navProfile: "Profile", navMusic: "Music", navProjects: "Projects", navUpdates: "Updates", navLinks: "Links",
-      projectsLabel: "PROJECTS", active: "ACTIVE", ghostDesc: "Telegram-инструменты и автоматизация.",
-      updatesLabel: "LATEST UPDATES", update1: "Morphynne bio — первая версия",
-      update1p: "Новый личный сайт и интерактивный плеер.", update2p: "Работа над Telegram-инструментами продолжается.",
-      linksLabel: "FIND ME", footer: "СДЕЛАНО ПО-СВОЕМУ", skip: "нажми, чтобы пропустить",
-      statuses: ["coding something", "шлю Ghostsee в прод", "ловлю баги"]
-    },
-    en: {
-      online: "ONLINE", tagline: "digital identity / project builder",
-      bio: "Turning ideas into projects. Code, digital tools, and a little chaos.",
-      currentStatus: "CURRENTLY", message: "Message me", copyNick: "Copy handle",
-      copied: "Handle copied", copyFail: "Copy manually: @morphynne",
-      musicLabel: "NOW PLAYING", trackLabel: "TRACK", openSC: "Open on SoundCloud",
-      navProfile: "Profile", navMusic: "Music", navProjects: "Projects", navUpdates: "Updates", navLinks: "Links",
-      projectsLabel: "PROJECTS", active: "ACTIVE", ghostDesc: "Telegram tools and automation.",
-      updatesLabel: "LATEST UPDATES", update1: "Morphynne bio — first version",
-      update1p: "A new personal site and interactive player.", update2p: "Work on Telegram tools continues.",
-      linksLabel: "FIND ME", footer: "BUILT MY OWN WAY", skip: "click to skip",
-      statuses: ["coding something", "shipping Ghostsee", "hunting bugs"]
-    }
+  $("#year").textContent = new Date().getFullYear();
+
+  /* ================= toast ================= */
+  const toast = $("#toast");
+  let tt;
+  const say = msg => {
+    toast.textContent = msg; toast.classList.add("show");
+    clearTimeout(tt); tt = setTimeout(() => toast.classList.remove("show"), 1800);
   };
-  let lang = "ru";
-  let statusIndex = 0;
-  const statusEl = document.getElementById("statusText");
 
-  function applyLang() {
-    root.lang = lang;
-    document.getElementById("lang").textContent = lang.toUpperCase();
-    document.querySelectorAll("[data-t]").forEach(el => {
-      const v = T[lang][el.dataset.t];
-      if (typeof v === "string") el.textContent = v;
-    });
-    statusEl.textContent = T[lang].statuses[statusIndex];
-  }
-
-  document.getElementById("lang").addEventListener("click", () => {
-    lang = lang === "ru" ? "en" : "ru";
-    applyLang();
-  });
-
-  /* ---------- toast ---------- */
-  const toast = document.getElementById("toast");
-  let toastTimer;
-  function notify(msg) {
-    toast.textContent = msg;
-    toast.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
-  }
-
-  /* ---------- copy handle ---------- */
-  const copyBtn = document.getElementById("copyNick");
-  copyBtn.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText("@morphynne");
-      notify(T[lang].copied);
-      copyBtn.classList.add("copied");
-      setTimeout(() => copyBtn.classList.remove("copied"), 1600);
-    } catch (e) {
-      notify(T[lang].copyFail);
+  /* ================= copy ================= */
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); }
+    catch {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.cssText = "position:fixed;opacity:0";
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
     }
-  });
-
-  document.getElementById("year").textContent = new Date().getFullYear();
-
-  /* ---------- split the handle into letters for the entrance animation ---------- */
-  const handle = document.getElementById("handle");
-  if (handle) {
-    const word = "MORPHYNNE";
-    handle.innerHTML =
-      [...word].map((c, i) => `<span class="ch" style="--i:${i}">${c}</span>`).join("") +
-      '<span class="red blink">_</span>';
-    handle.addEventListener("pointerenter", () => {
-      handle.classList.remove("glitch");
-      void handle.offsetWidth;
-      handle.classList.add("glitch");
-    });
   }
+  $$("[data-copy]").forEach(btn => btn.addEventListener("click", async () => {
+    await copyText(btn.dataset.copy);
+    btn.classList.add("copied");
+    setTimeout(() => btn.classList.remove("copied"), 1100);
+    say(btn.dataset.msg || "Скопировано");
+  }));
 
-  /* ---------- boot intro: code being written, with syntax colours ---------- */
-  const bootEl = document.getElementById("boot");
-  const bootCode = document.getElementById("bootCode");
-  const bootBar = document.getElementById("bootBar");
+  /* ================= share ================= */
+  const shareFn = async () => {
+    const data = { title: "Morphynne", text: "Morphynne — developer", url: location.href };
+    if (navigator.share) { try { await navigator.share(data); return; } catch { return; } }
+    await copyText(location.href); say("Ссылка скопирована");
+  };
+  $("#shareBtn").addEventListener("click", shareFn);
+  $("#shareBtn2").addEventListener("click", shareFn);
 
+  /* ================= theme swatches ================= */
+  const swatches = $$(".sw");
+  const setTheme = name => {
+    if (name === "red") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", name);
+    swatches.forEach(s => s.setAttribute("aria-pressed", String(s.dataset.theme === name)));
+    say("акцент: " + name);
+  };
+  swatches.forEach(s => s.addEventListener("click", () => setTheme(s.dataset.theme)));
+  setTheme("red");
+
+  /* ================= tabs ================= */
+  const panels = $$(".panel");
+  const dockBtns = $$(".dock-btn");
+  let current = "profile", leaving = null;
+  function go(name, push = true) {
+    if (name === current) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    const next = $(`[data-panel="${name}"]`);
+    if (!next) return;
+    const prev = $(`[data-panel="${current}"]`);
+    if (prev && !reduce) {
+      prev.classList.add("leave");
+      setTimeout(() => { prev.hidden = true; prev.classList.remove("leave"); }, 240);
+    } else if (prev) prev.hidden = true;
+    next.hidden = false;
+    current = name;
+    document.body.dataset.tab = name;
+    dockBtns.forEach(b => b.classList.toggle("active", b.dataset.go === name));
+    if (push) history.replaceState(null, "", "#" + name);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (name === "profile") runProfile();
+  }
+  $$("[data-go]").forEach(el => el.addEventListener("click", e => { e.preventDefault(); go(el.dataset.go); }));
+  const initial = location.hash.slice(1);
+  if (["music", "projects", "contact"].includes(initial)) {
+    panels.forEach(p => p.hidden = p.dataset.panel !== initial);
+    current = initial; document.body.dataset.tab = initial;
+    dockBtns.forEach(b => b.classList.toggle("active", b.dataset.go === initial));
+  } else panels.forEach(p => p.hidden = p.dataset.panel !== "profile");
+
+  $("#toTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+  /* ================= boot ================= */
+  const boot = $("#boot"), bootText = $("#bootText");
   const lines = [
-    "// morphynne.bio — initializing",
-    "",
-    "const me = {",
-    '  handle: "@morphynne",',
-    '  role: "developer",',
-    '  builds: ["ghostsee"],',
-    '  status: "coding something",',
-    "};",
-    "",
-    "await render(me);",
-    "> access granted_"
+    [["k", "const"], ["", " morphynne = {"]],
+    [["", "  "], ["s", "\"role\""], ["", ": "], ["s", "\"developer\""], ["", ","]],
+    [["", "  "], ["s", "\"web\""], ["", ": "], ["k", "true"], ["", ","]],
+    [["", "  "], ["s", "\"mood\""], ["", ": "], ["s", "\"chaos\""]],
+    [["", "};"]],
+    [["c", "// welcome in"]],
   ];
-  const total = lines.reduce((n, l) => n + l.length + 1, 0);
-  let typed = 0;
-  let finished = false;
-
-  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  function highlight(text) {
-    const re = /(\/\/[^\n]*)|("[^"\n]*"?)|\b(const|await)\b|(>)/g;
-    let out = "", last = 0, m;
-    while ((m = re.exec(text))) {
-      out += esc(text.slice(last, m.index));
-      const cls = m[1] ? "c" : m[2] ? "s" : m[3] ? "k" : "p";
-      out += `<span class="${cls}">${esc(m[0])}</span>`;
-      last = re.lastIndex;
-    }
-    return out + esc(text.slice(last));
+  let li = 0, ci = 0, booted = false, bootTimer;
+  function endBoot() {
+    if (booted) return; booted = true;
+    clearTimeout(bootTimer);
+    boot.classList.add("done");
+    setTimeout(() => boot.remove(), 700);
+    runProfile();
   }
-
-  function finish() {
-    if (finished) return;
-    finished = true;
-    bootEl.classList.add("out");
-    root.classList.remove("booting");
-    root.classList.add("ready");
-    setTimeout(() => bootEl.remove(), 900);
-    initReveal();
+  function typeBoot() {
+    if (booted) return;
+    if (li >= lines.length) { bootTimer = setTimeout(endBoot, 450); return; }
+    const flat = lines[li].flatMap(([c, t]) => [...t].map(ch => [c, ch]));
+    if (ci === 0 && li > 0) bootText.append("\n");
+    if (ci < flat.length) {
+      const [c, ch] = flat[ci];
+      const s = document.createElement("span");
+      if (c) s.className = c;
+      s.textContent = ch; bootText.append(s); ci++;
+      bootTimer = setTimeout(typeBoot, 26 + Math.random() * 28);
+    } else { li++; ci = 0; bootTimer = setTimeout(typeBoot, 110); }
   }
+  boot.addEventListener("click", endBoot);
+  if (reduce || location.hash) endBoot(); else { typeBoot(); setTimeout(endBoot, 4600); }
 
-  async function runBoot() {
-    let out = "";
-    for (const line of lines) {
-      for (const ch of line) {
-        if (finished) return;
-        out += ch;
-        typed++;
-        bootCode.innerHTML = highlight(out);
-        bootBar.style.width = (typed / total * 100).toFixed(1) + "%";
-        // quicker on spaces, slightly slower on punctuation, with a little human jitter
-        const delay = ch === " " ? 6 : /[{}();,:]/.test(ch) ? 38 : 13 + Math.random() * 20;
-        await sleep(delay);
+  /* ================= profile animations ================= */
+  let profileRan = false;
+  function runProfile() {
+    // bio typewriter
+    const bioEl = $("#bioText");
+    if (!profileRan) {
+      profileRan = true;
+      const text = "Собираю идеи в проекты. Код, инструменты и немного хаоса.";
+      if (reduce) bioEl.textContent = text;
+      else {
+        let i = 0;
+        const t = setInterval(() => { bioEl.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(t); }, 32);
       }
-      out += "\n";
-      typed++;
-      await sleep(line === "" ? 70 : 160);
-    }
-    bootBar.style.width = "100%";
-    await sleep(500);
-    finish();
-  }
-
-  bootEl.addEventListener("click", finish);
-  document.addEventListener("keydown", finish, { once: true });
-
-  /* ---------- scroll reveal ---------- */
-  function initReveal() {
-    const items = document.querySelectorAll(".reveal, .stagger");
-    // alternate direction for cards so the page feels less uniform
-    document.querySelectorAll(".content-section.reveal").forEach((s, i) => {
-      if (i % 2) s.classList.add("r");
-    });
-    document.querySelectorAll(".stagger").forEach(group => {
-      [...group.children].forEach((c, i) => c.style.setProperty("--i", i));
-    });
-    if (!("IntersectionObserver" in window)) {
-      items.forEach(el => el.classList.add("seen"));
-      return;
-    }
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add("seen");
-          io.unobserve(e.target);
-        }
+      // counters
+      $$(".stat b").forEach(b => {
+        const target = +b.dataset.count;
+        if (reduce) { b.textContent = target; return; }
+        const t0 = performance.now(), dur = 1200;
+        const step = now => {
+          const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+          b.textContent = Math.round(target * e);
+          if (p < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
       });
-    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
-    items.forEach(el => io.observe(el));
+    }
+    // meters
+    $$(".meter i, .progress i").forEach(i => { i.style.width = i.dataset.level + "%"; });
   }
 
-  /* ---------- section nav highlight ---------- */
-  const navLinks = [...document.querySelectorAll(".section-nav a")];
-  const navIO = new IntersectionObserver(entries => entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      navLinks.forEach(a => a.classList.toggle("active", a.getAttribute("href") === "#" + entry.target.id));
-    }
-  }), { rootMargin: "-20% 0px -65% 0px" });
-  ["profile", "music", "projects", "updates", "links"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) navIO.observe(el);
-  });
-
-  /* ---------- status line cycling ---------- */
-  function cycleStatus() {
+  /* ================= status cycling ================= */
+  const statuses = ["coding something", "ловлю баги", "в поиске идей", "собираю что-то новое"];
+  const statusEl = $("#statusText");
+  let si = 0;
+  if (!reduce) setInterval(() => {
     statusEl.classList.add("swap");
     setTimeout(() => {
-      statusIndex = (statusIndex + 1) % T[lang].statuses.length;
-      statusEl.textContent = T[lang].statuses[statusIndex];
+      si = (si + 1) % statuses.length;
+      statusEl.textContent = statuses[si];
       statusEl.classList.remove("swap");
-    }, 260);
-  }
-  if (!reduceMotion) setInterval(cycleStatus, 3600);
+    }, 300);
+  }, 3400);
 
-  /* ---------- pointer effects (desktop only) ---------- */
-  if (finePointer && !reduceMotion) {
-    // spotlight: remember cursor position inside each card
-    document.querySelectorAll(".spot, .pill").forEach(el => {
-      el.addEventListener("pointermove", e => {
-        const r = el.getBoundingClientRect();
-        el.style.setProperty("--sx", (e.clientX - r.left) + "px");
-        el.style.setProperty("--sy", (e.clientY - r.top) + "px");
-      });
-    });
-
-    // magnetic: buttons lean a little toward the cursor
-    document.querySelectorAll(".magnetic").forEach(el => {
-      el.addEventListener("pointermove", e => {
-        const r = el.getBoundingClientRect();
-        const x = (e.clientX - (r.left + r.width / 2)) * 0.18;
-        const y = (e.clientY - (r.top + r.height / 2)) * 0.25;
-        el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
-      });
-      el.addEventListener("pointerleave", () => { el.style.transform = ""; });
-    });
-
-    // avatar tilt
-    const tilt = document.querySelector(".avatar-tilt");
-    if (tilt) {
-      const wrap = tilt.parentElement;
-      wrap.addEventListener("pointermove", e => {
-        const r = tilt.getBoundingClientRect();
-        const px = (e.clientX - r.left) / r.width - 0.5;
-        const py = (e.clientY - r.top) / r.height - 0.5;
-        tilt.style.transform = `perspective(600px) rotateY(${(px * 16).toFixed(2)}deg) rotateX(${(-py * 16).toFixed(2)}deg)`;
-      });
-      wrap.addEventListener("pointerleave", () => { tilt.style.transform = ""; });
+  /* ================= avatar: click burst ================= */
+  const avatarBtn = $("#avatarBtn"), burstCount = $("#burstCount");
+  let clicks = 0, burstT;
+  avatarBtn.addEventListener("click", e => {
+    clicks++;
+    burstCount.textContent = clicks;
+    burstCount.classList.add("show");
+    clearTimeout(burstT); burstT = setTimeout(() => burstCount.classList.remove("show"), 1600);
+    avatarBtn.classList.remove("spin"); void avatarBtn.offsetWidth; avatarBtn.classList.add("spin");
+    if (!reduce) {
+      const r = avatarBtn.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      for (let i = 0; i < 16; i++) {
+        const s = document.createElement("span");
+        s.className = "sparkle"; document.body.appendChild(s);
+        const a = (Math.PI * 2 / 16) * i, d = 70 + Math.random() * 50;
+        s.animate([
+          { transform: `translate(${cx}px,${cy}px) scale(1)`, opacity: 1 },
+          { transform: `translate(${cx + Math.cos(a) * d}px,${cy + Math.sin(a) * d}px) scale(0)`, opacity: 0 },
+        ], { duration: 700 + Math.random() * 300, easing: "cubic-bezier(.2,.7,.2,1)" }).onfinish = () => s.remove();
+      }
     }
-  }
-
-  /* ---------- ripple on press (all devices) ---------- */
-  document.querySelectorAll(".ripple-host").forEach(el => {
-    el.addEventListener("pointerdown", e => {
-      if (reduceMotion) return;
-      const r = el.getBoundingClientRect();
-      const size = Math.max(r.width, r.height) * 0.9;
-      const dot = document.createElement("span");
-      dot.className = "ripple";
-      dot.style.width = dot.style.height = size + "px";
-      dot.style.left = (e.clientX - r.left - size / 2) + "px";
-      dot.style.top = (e.clientY - r.top - size / 2) + "px";
-      el.appendChild(dot);
-      dot.addEventListener("animationend", () => dot.remove());
-    });
+    if (clicks === 7) say("ты нашёл пасхалку 👀");
   });
 
-  /* ---------- particle field (canvas) ---------- */
-  const canvas = document.getElementById("fx");
-  if (canvas && !reduceMotion && canvas.getContext) {
-    const ctx = canvas.getContext("2d");
-    const pointer = { x: -9999, y: -9999 };
-    let particles = [], W = 0, H = 0, dpr = 1, rafId = null;
+  /* ================= ghost project expand ================= */
+  const ghostToggle = $("#ghostToggle"), ghostBody = $("#ghostBody");
+  ghostToggle.addEventListener("click", () => {
+    const open = ghostBody.classList.toggle("open");
+    ghostToggle.setAttribute("aria-expanded", String(open));
+    ghostToggle.firstChild.textContent = open ? "свернуть " : "подробнее ";
+  });
 
-    function resize() {
-      W = innerWidth;
-      H = innerHeight;
-      dpr = Math.min(devicePixelRatio || 1, isSmall ? 1.5 : 2);
-      canvas.width = Math.floor(W * dpr);
-      canvas.height = Math.floor(H * dpr);
-      canvas.style.width = W + "px";
-      canvas.style.height = H + "px";
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = Math.min(isSmall ? 26 : 70, Math.floor((W * H) / 16000));
-      particles = Array.from({ length: count }, () => ({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        vx: (Math.random() - 0.5) * 0.28,
-        vy: (Math.random() - 0.5) * 0.28,
-        r: Math.random() * 1.3 + 0.5,
-        a: Math.random() * 0.45 + 0.2
-      }));
+  /* ================= terminal ================= */
+  const termOut = $("#termOut"), termForm = $("#termForm"), termInput = $("#termInput");
+  const print = (html, cls = "") => {
+    const d = document.createElement("div");
+    d.className = "ln " + cls; d.innerHTML = html;
+    termOut.appendChild(d); termOut.scrollTop = termOut.scrollHeight;
+  };
+  const commands = {
+    help: () => ["доступные команды: help, whoami, stack, ghostsee --status, date, clear"],
+    whoami: () => ["morphynne — developer. web, telegram-боты, linux."],
+    stack: () => ["js · python · html/css · telegram bot api · linux"],
+    "ghostsee --status": () => ["ghostsee: <span class='ok'>ACTIVE</span> · telegram bot online"],
+    date: () => [new Date().toLocaleString("ru-RU")],
+    clear: () => { termOut.innerHTML = ""; return []; },
+  };
+  function runCmd(raw) {
+    const cmd = raw.trim().toLowerCase();
+    if (!cmd) return;
+    print(`<span class="cmd">$ ${raw.replace(/</g, "&lt;")}</span>`);
+    const fn = commands[cmd];
+    if (!fn) { print(`команда не найдена: ${cmd.replace(/</g, "&lt;")}. напиши help`, "err"); return; }
+    const out = fn();
+    out.forEach((line, i) => setTimeout(() => print(line, "ok"), reduce ? 0 : i * 120));
+  }
+  termForm.addEventListener("submit", e => { e.preventDefault(); runCmd(termInput.value); termInput.value = ""; });
+  $$("[data-cmd]").forEach(b => b.addEventListener("click", () => runCmd(b.dataset.cmd)));
+  print("morphynne terminal v1.0 — напиши <span class='cmd'>help</span>", "terminal-note");
+
+  /* ================= mood slider ================= */
+  const mood = $("#mood"), moodVal = $("#moodVal"), moodText = $("#moodText");
+  const moodMsg = v => v < 25 ? "спокойно, почти по плану" : v < 60 ? "немного хаоса — норма" : v < 85 ? "код пишется сам" : "полный хаос, но работает";
+  const updMood = () => { moodVal.textContent = `chaos: ${mood.value}%`; moodText.textContent = moodMsg(+mood.value); };
+  mood.addEventListener("input", updMood); updMood();
+
+  /* ================= player ================= */
+  const audio = $("#audio"), player = $("#player"), playBtn = $("#playBtn");
+  const bar = $("#bar"), fill = $("#fill"), knob = $("#knob"), cur = $("#cur"), dur = $("#dur");
+  const vol = $("#vol"), loopBtn = $("#loopBtn");
+  const fmt = s => isFinite(s) ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` : "0:00";
+  audio.volume = 0.9;
+  audio.addEventListener("loadedmetadata", () => dur.textContent = fmt(audio.duration));
+  audio.addEventListener("timeupdate", () => {
+    const p = audio.duration ? audio.currentTime / audio.duration : 0;
+    fill.style.width = p * 100 + "%"; knob.style.left = p * 100 + "%";
+    cur.textContent = fmt(audio.currentTime);
+  });
+  audio.addEventListener("play", () => player.classList.add("playing"));
+  audio.addEventListener("pause", () => player.classList.remove("playing"));
+  audio.addEventListener("ended", () => player.classList.remove("playing"));
+  playBtn.addEventListener("click", () => audio.paused ? audio.play() : audio.pause());
+  $("#rewBtn").addEventListener("click", () => audio.currentTime = Math.max(0, audio.currentTime - 10));
+  $("#fwdBtn").addEventListener("click", () => audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 10));
+  loopBtn.addEventListener("click", () => {
+    audio.loop = !audio.loop; loopBtn.classList.toggle("on", audio.loop);
+    say(audio.loop ? "повтор: вкл" : "повтор: выкл");
+  });
+  vol.addEventListener("input", () => audio.volume = +vol.value);
+  let seeking = false;
+  const seek = e => {
+    const r = bar.getBoundingClientRect();
+    const p = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    if (audio.duration) audio.currentTime = p * audio.duration;
+  };
+  bar.addEventListener("pointerdown", e => { seeking = true; bar.setPointerCapture(e.pointerId); seek(e); });
+  bar.addEventListener("pointermove", e => { if (seeking) seek(e); });
+  const endSeek = () => seeking = false;
+  bar.addEventListener("pointerup", endSeek);
+  bar.addEventListener("pointercancel", endSeek);
+
+  /* ================= particles + cursor trail ================= */
+  const cv = $("#fx"), ctx = cv.getContext("2d");
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  let W = innerWidth, H = innerHeight, pts = [];
+  const mouse = { x: -999, y: -999 };
+  const trail = [];
+  function size() {
+    W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    cv.style.width = W + "px"; cv.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = mobile ? 26 : 62;
+    pts = Array.from({ length: n }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - .5) * .3, vy: (Math.random() - .5) * .3, r: Math.random() * 1.6 + .4,
+    }));
+  }
+  const accentRGB = () => getComputedStyle(root).getPropertyValue("--accent").trim();
+  let rgb = "239,41,71";
+  function refreshRGB() {
+    const c = accentRGB();
+    const m = c.match(/#([0-9a-f]{6})/i);
+    if (m) { const n = parseInt(m[1], 16); rgb = `${n >> 16 & 255},${n >> 8 & 255},${n & 255}`; }
+  }
+  function frame() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of pts) {
+      p.x += p.vx; p.y += p.vy;
+      const dx = p.x - mouse.x, dy = p.y - mouse.y, d = Math.hypot(dx, dy);
+      if (d < 110 && d > 0) { p.x += dx / d * 1.2; p.y += dy / d * 1.2; }
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283);
+      ctx.fillStyle = `rgba(${rgb},.7)`; ctx.fill();
     }
-
-    function frame() {
-      ctx.clearRect(0, 0, W, H);
-      for (const p of particles) {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < -10) p.x = W + 10;
-        if (p.x > W + 10) p.x = -10;
-        if (p.y < -10) p.y = H + 10;
-        if (p.y > H + 10) p.y = -10;
-        if (finePointer) {
-          const dx = p.x - pointer.x, dy = p.y - pointer.y;
-          const d = Math.hypot(dx, dy);
-          if (d < 130 && d > 0) {
-            p.x += (dx / d) * 0.7;
-            p.y += (dy / d) * 0.7;
-          }
-        }
-        ctx.beginPath();
-        ctx.fillStyle = `rgba(239,41,71,${p.a})`;
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fill();
+    const max = mobile ? 90 : 120;
+    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+      const a = pts[i], b = pts[j], d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (d < max) {
+        ctx.strokeStyle = `rgba(${rgb},${(1 - d / max) * .22})`; ctx.lineWidth = .6;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
       }
-      const maxD = isSmall ? 95 : 125;
-      ctx.lineWidth = 0.6;
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const a = particles[i], b = particles[j];
-          const d = Math.hypot(a.x - b.x, a.y - b.y);
-          if (d < maxD) {
-            ctx.strokeStyle = `rgba(239,41,71,${(1 - d / maxD) * 0.13})`;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-          }
-        }
-      }
-      rafId = requestAnimationFrame(frame);
     }
+    // trail
+    for (let i = trail.length - 1; i >= 0; i--) {
+      const t = trail[i]; t.life -= .04;
+      if (t.life <= 0) { trail.splice(i, 1); continue; }
+      ctx.beginPath(); ctx.arc(t.x, t.y, 3 * t.life, 0, 6.283);
+      ctx.fillStyle = `rgba(${rgb},${t.life * .6})`; ctx.fill();
+    }
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  size(); refreshRGB(); frame();
+  let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(size, 150); });
+  if (fine && !reduce) addEventListener("pointermove", e => {
+    mouse.x = e.clientX; mouse.y = e.clientY;
+    trail.push({ x: e.clientX, y: e.clientY, life: 1 });
+    if (trail.length > 30) trail.shift();
+  });
+  swatches.forEach(s => s.addEventListener("click", () => setTimeout(refreshRGB, 20)));
 
-    function start() { if (!rafId) rafId = requestAnimationFrame(frame); }
-    function stop() { cancelAnimationFrame(rafId); rafId = null; }
-
-    resize();
-    let resizeTimer;
-    addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(resize, 150); });
-    if (finePointer) addEventListener("pointermove", e => { pointer.x = e.clientX; pointer.y = e.clientY; }, { passive: true });
-    document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
-    start();
+  /* ================= pointer effects (desktop) ================= */
+  if (fine && !reduce) {
+    $$(".magnetic").forEach(el => {
+      el.addEventListener("pointermove", e => {
+        const r = el.getBoundingClientRect();
+        el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .18}px,${(e.clientY - r.top - r.height / 2) * .25}px)`;
+      });
+      el.addEventListener("pointerleave", () => el.style.transform = "");
+    });
+    $$(".spot").forEach(el => el.addEventListener("pointermove", e => {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty("--mx", (e.clientX - r.left) + "px");
+      el.style.setProperty("--my", (e.clientY - r.top) + "px");
+    }));
+    $$(".card").forEach(el => el.addEventListener("pointermove", e => {
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      el.style.transform = `perspective(900px) rotateX(${-y * 4}deg) rotateY(${x * 4}deg)`;
+    }));
+    $$(".card").forEach(el => el.addEventListener("pointerleave", () => el.style.transform = ""));
   }
 
-  /* ---------- start ---------- */
-  applyLang();
-  if (reduceMotion) {
-    finish();
-  } else {
-    runBoot();
-    setTimeout(finish, 9000); // safety net: never leave the page hidden
-  }
+  /* ================= ripple on tap ================= */
+  $$(".ripple").forEach(el => el.addEventListener("pointerdown", e => {
+    const r = el.getBoundingClientRect(), s = Math.max(r.width, r.height);
+    const d = document.createElement("span");
+    d.className = "ripple-dot";
+    d.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`;
+    el.appendChild(d); setTimeout(() => d.remove(), 700);
+  }));
 })();
