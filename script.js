@@ -5,6 +5,7 @@
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
   const small = innerWidth < 700;
+  const fx = (el, css) => Object.assign(el.style, css);
 
   $("#year").textContent = new Date().getFullYear();
 
@@ -13,7 +14,7 @@
   let tt;
   const say = msg => {
     toast.textContent = msg; toast.classList.add("show");
-    clearTimeout(tt); tt = setTimeout(() => toast.classList.remove("show"), 1800);
+    clearTimeout(tt); tt = setTimeout(() => toast.classList.remove("show"), 1700);
   };
   async function copyText(text) {
     try { await navigator.clipboard.writeText(text); }
@@ -23,42 +24,71 @@
       document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
     }
   }
-  function flash(btn) {
-    btn.classList.add("copied");
-    setTimeout(() => btn.classList.remove("copied"), 1100);
-  }
+  const flash = btn => { btn.classList.add("copied"); setTimeout(() => btn.classList.remove("copied"), 1100); };
   $("#copyNick").addEventListener("click", async e => {
-    const btn = e.currentTarget;
-    await copyText("@morphynne"); flash(btn); say("Ник скопирован: @morphynne");
+    const b = e.currentTarget; await copyText("@morphynne"); flash(b); say("Ник скопирован: @morphynne");
   });
   $$("[data-copy]").forEach(b => b.addEventListener("click", async () => {
     await copyText(b.dataset.copy); flash(b); say("Скопировано: " + b.dataset.copy);
   }));
-
-  /* ================= share ================= */
   $("#shareBtn").addEventListener("click", async e => {
-    const data = { title: "Morphynne", text: "Morphynne — developer", url: location.href };
-    if (navigator.share) { try { await navigator.share(data); } catch {} return; }
-    const btn = e.currentTarget;
-    await copyText(location.href); flash(btn); say("Ссылка скопирована");
+    const b = e.currentTarget;
+    if (navigator.share) { try { await navigator.share({ title: "Morphynne", url: location.href }); } catch {} return; }
+    await copyText(location.href); flash(b); say("Ссылка скопирована");
   });
 
-  /* ================= theme swatches ================= */
-  const swatches = $$(".sw");
+  /* ================= fx menu ================= */
+  const fxOpen = $("#fxOpen"), fxPanel = $("#fxPanel");
+  fxOpen.addEventListener("click", () => {
+    const open = fxPanel.hidden;
+    fxPanel.hidden = !open;
+    fxOpen.setAttribute("aria-expanded", String(open));
+  });
+  document.addEventListener("pointerdown", e => {
+    if (!fxPanel.hidden && !e.target.closest(".fx-menu")) { fxPanel.hidden = true; fxOpen.setAttribute("aria-expanded", "false"); }
+  });
   function setTheme(name) {
     if (name === "red") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", name);
-    swatches.forEach(s => s.classList.toggle("on", s.dataset.theme === name));
+    $$(".sw").forEach(s => s.classList.toggle("on", s.dataset.theme === name));
     refreshRGB();
-    say("акцент: " + name);
   }
-  swatches.forEach(s => s.addEventListener("click", () => setTheme(s.dataset.theme)));
+  $$(".sw").forEach(s => s.addEventListener("click", () => setTheme(s.dataset.theme)));
 
-  /* ================= progress line ================= */
-  const prog = $("#progress");
-  addEventListener("scroll", () => {
-    const h = document.documentElement.scrollHeight - innerHeight;
-    prog.style.transform = `scaleX(${h > 0 ? scrollY / h : 0})`;
-  }, { passive: true });
+  const scanBtn = $("#scanBtn"), rainBtn = $("#rainBtn"), calmBtn = $("#calmBtn");
+  scanBtn.addEventListener("click", () => toggleItem(scanBtn, "scan"));
+  calmBtn.addEventListener("click", () => toggleItem(calmBtn, "calm"));
+  function toggleItem(btn, cls) {
+    const on = document.body.classList.toggle(cls);
+    btn.setAttribute("aria-pressed", String(on));
+  }
+
+  /* ================= rain (only runs while enabled) ================= */
+  const rc = $("#rain"), rctx = rc.getContext("2d");
+  const GLYPHS = "01<>/#$%&*+=?✳";
+  let rainOn = false, rainTimer = 0, cols = [];
+  function rainSize() {
+    rc.width = innerWidth / 2; rc.height = innerHeight / 2; // half-res = cheaper
+    rc.style.width = "100%"; rc.style.height = "100%";
+    cols = Array.from({ length: Math.floor(rc.width / 8) }, () => Math.random() * -rc.height / 8);
+  }
+  function rainStep() {
+    rctx.fillStyle = "rgba(8,8,8,.18)";
+    rctx.fillRect(0, 0, rc.width, rc.height);
+    rctx.font = "7px IBM Plex Mono, monospace";
+    rctx.fillStyle = `rgba(${getComputedStyle(root).getPropertyValue("--rgb").trim()},.85)`;
+    for (let i = 0; i < cols.length; i++) {
+      rctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], i * 8, cols[i] * 8);
+      cols[i] = cols[i] * 8 > rc.height && Math.random() > .97 ? 0 : cols[i] + 1;
+    }
+  }
+  rainBtn.addEventListener("click", () => {
+    rainOn = !rainOn;
+    document.body.classList.toggle("rain", rainOn);
+    rainBtn.setAttribute("aria-pressed", String(rainOn));
+    clearInterval(rainTimer);
+    if (rainOn && !reduce) { rainSize(); rainTimer = setInterval(rainStep, 90); }
+  });
+  addEventListener("resize", () => { if (rainOn) rainSize(); }, { passive: true });
 
   /* ================= boot ================= */
   const boot = $("#boot"), bootCode = $("#bootCode"), bootBar = $("#bootBar");
@@ -69,21 +99,21 @@
     [["", "  "], ["s", "\"telegram\""], ["", ": "], ["s", "\"@morphynne\""], ["", ","]],
     [["", "  "], ["s", "\"mood\""], ["", ": "], ["s", "\"chaos\""]],
     [["", "};"]],
-    [["c", "// welcome in"]],
+    [["c", "// hello, traveler 🖤"]],
   ];
   const total = lines.reduce((a, l) => a + l.reduce((b, [, t]) => b + t.length, 0), 0) + lines.length;
-  let li = 0, ci = 0, done = false, bootTimer, written = 0;
+  let li = 0, ci = 0, booted = false, bootTimer, written = 0;
   function endBoot() {
-    if (done) return; done = true;
+    if (booted) return; booted = true;
     clearTimeout(bootTimer);
     boot.classList.add("done");
     root.classList.remove("booting");
-    setTimeout(() => boot.remove(), 750);
+    setTimeout(() => boot.remove(), 650);
     afterBoot();
   }
   function typeBoot() {
-    if (done) return;
-    if (li >= lines.length) { bootTimer = setTimeout(endBoot, 420); return; }
+    if (booted) return;
+    if (li >= lines.length) { bootTimer = setTimeout(endBoot, 380); return; }
     const flat = lines[li].flatMap(([c, t]) => [...t].map(ch => [c, ch]));
     if (ci === 0 && li > 0) bootCode.append("\n");
     if (ci < flat.length) {
@@ -92,24 +122,23 @@
       if (c) s.className = c;
       s.textContent = ch; bootCode.append(s); ci++; written++;
       bootBar.style.width = (written / total * 100) + "%";
-      bootTimer = setTimeout(typeBoot, 24 + Math.random() * 26);
-    } else { li++; ci = 0; written++; bootTimer = setTimeout(typeBoot, 110); }
+      bootTimer = setTimeout(typeBoot, 22 + Math.random() * 22);
+    } else { li++; ci = 0; written++; bootTimer = setTimeout(typeBoot, 100); }
   }
   boot.addEventListener("click", endBoot);
-  if (reduce || location.hash) endBoot(); else { typeBoot(); setTimeout(endBoot, 4800); }
+  if (reduce || location.hash) endBoot(); else { typeBoot(); setTimeout(endBoot, 4300); }
 
-  /* ================= after boot: entrance, typewriter, counters ================= */
-  // split handle into letters for entrance
+  /* ================= handle letters ================= */
   const handle = $("#handle");
   const hText = handle.textContent;
   handle.innerHTML = [...hText].map((c, i) => `<span class="ch" style="--i:${i}">${c === "_" ? '<span class="red blink">_</span>' : c}</span>`).join("");
 
+  /* ================= after boot ================= */
   let ran = false;
   function afterBoot() {
     if (ran) return; ran = true;
     root.classList.add("ready");
-    $$(".fx").forEach((el, i) => setTimeout(() => el.classList.add("in"), reduce ? 0 : i * 70));
-    $$(".stagger").forEach(el => el.classList.add("in"));
+    $$(".fx").forEach((el, i) => setTimeout(() => el.classList.add("in"), reduce ? 0 : i * 60));
     const text = "Собираю идеи в проекты. Код, цифровые инструменты и немного хаоса.";
     const bio = $("#bioText");
     if (reduce) bio.textContent = text;
@@ -122,28 +151,25 @@
       if (reduce) { b.textContent = target; return; }
       const t0 = performance.now();
       const step = now => {
-        const p = Math.min(1, (now - t0) / 1200), e = 1 - Math.pow(1 - p, 3);
+        const p = Math.min(1, (now - t0) / 1100), e = 1 - Math.pow(1 - p, 3);
         b.textContent = Math.round(target * e);
         if (p < 1) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
     });
-    $$(".meter i, .progress i").forEach(i => setTimeout(() => i.style.width = i.dataset.level + "%", 400));
   }
-  setTimeout(() => { if (!ran) endBoot(); }, 7000);
+  setTimeout(() => { if (!ran) endBoot(); }, 6500);
 
-  /* ================= reveal on scroll ================= */
+  /* ================= reveal on scroll (one observer) ================= */
   const io = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (!e.isIntersecting) return;
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
       e.target.classList.add("in");
-      if (e.target.querySelector(".meter i, .progress i")) {
-        $$(".meter i, .progress i", e.target).forEach(i => i.style.width = i.dataset.level + "%");
-      }
+      $$(".meter i, .progress i", e.target).forEach(i => i.style.width = i.dataset.level + "%");
       io.unobserve(e.target);
-    });
-  }, { threshold: .15 });
-  $$(".reveal, .content-section, .skills, .project-card, .stagger").forEach(el => io.observe(el));
+    }
+  }, { threshold: .12 });
+  $$(".reveal, .block").forEach(el => io.observe(el));
 
   /* ================= status cycling ================= */
   const statuses = ["coding something", "ловлю баги", "в поиске идей", "собираю что-то новое"];
@@ -156,34 +182,86 @@
       statusEl.textContent = statuses[si];
       statusNum.textContent = "↗ 0" + (si + 1);
       statusEl.classList.remove("swap");
-    }, 260);
-  }, 3400);
+    }, 240);
+  }, 3600);
 
-  /* ================= avatar: click burst + spin ================= */
+  /* ================= click effect: bloom + sparks ================= */
+  const clickLayer = $("#clickLayer");
+  function bloomAt(x, y, strong = false) {
+    if (reduce) return;
+    const bloom = document.createElement("span");
+    bloom.className = "bloom";
+    bloom.style.left = x + "px"; bloom.style.top = y + "px";
+    clickLayer.appendChild(bloom);
+    bloom.animate([
+      { transform: "scale(.2)", opacity: .9 },
+      { transform: `scale(${strong ? 2.4 : 1.7})`, opacity: 0 },
+    ], { duration: 650, easing: "cubic-bezier(.2,.8,.2,1)" }).onfinish = () => bloom.remove();
+
+    const n = small ? 4 : 6;
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement("span");
+      s.className = "spark";
+      s.textContent = i % 2 ? "✳" : "+";
+      s.style.left = x + "px"; s.style.top = y + "px";
+      clickLayer.appendChild(s);
+      const a = (Math.PI * 2 / n) * i + Math.random() * .4;
+      const d = 34 + Math.random() * 30;
+      s.animate([
+        { transform: "translate(0,0) rotate(0deg) scale(1)", opacity: 1 },
+        { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) rotate(${120 + Math.random() * 120}deg) scale(.4)`, opacity: 0 },
+      ], { duration: 560 + Math.random() * 200, easing: "cubic-bezier(.2,.8,.2,1)" }).onfinish = () => s.remove();
+    }
+  }
+  // every tap/click gets the soft bloom (not on inputs)
+  addEventListener("pointerdown", e => {
+    if (e.target.closest("input, textarea, .dock, .fx-menu")) return;
+    bloomAt(e.clientX, e.clientY);
+  }, { passive: true });
+
+  /* ================= avatar: burst counter + hello ================= */
   const avatarBtn = $("#avatarBtn"), burstCount = $("#burstCount");
   let clicks = 0, bt;
   avatarBtn.addEventListener("click", () => {
     clicks++;
     burstCount.textContent = clicks;
     burstCount.classList.add("show");
-    clearTimeout(bt); bt = setTimeout(() => burstCount.classList.remove("show"), 1600);
+    clearTimeout(bt); bt = setTimeout(() => burstCount.classList.remove("show"), 1500);
     avatarBtn.classList.remove("pop"); void avatarBtn.offsetWidth; avatarBtn.classList.add("pop");
-    if (!reduce) {
-      const r = avatarBtn.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-      for (let i = 0; i < 18; i++) {
-        const s = document.createElement("span");
-        s.className = "sparkle"; document.body.appendChild(s);
-        const a = (Math.PI * 2 / 18) * i, d = 70 + Math.random() * 60;
-        s.animate([
-          { transform: `translate(${cx}px,${cy}px) scale(1)`, opacity: 1 },
-          { transform: `translate(${cx + Math.cos(a) * d}px,${cy + Math.sin(a) * d}px) scale(0)`, opacity: 0 },
-        ], { duration: 700 + Math.random() * 300, easing: "cubic-bezier(.2,.8,.2,1)" }).onfinish = () => s.remove();
-      }
-    }
-    if (clicks === 7) { say("пасхалка найдена 👀"); konamiRain("✳ morphynne ✳"); }
+    if (clicks === 7) { clicks = 0; burstCount.classList.remove("show"); showHello(); }
   });
 
-  /* ================= ghost expand ================= */
+  /* ================= hello easter egg ================= */
+  const hello = $("#hello"), helloText = $("#helloText");
+  let helloTimer;
+  function showHello() {
+    hello.hidden = false; hello.classList.remove("out", "typed");
+    helloText.innerHTML = "";
+    const parts = [["hello from ", ""], ["morphynne", "red"]];
+    const flat = parts.flatMap(([t, c]) => [...t].map(ch => [ch, c]));
+    let i = 0;
+    clearInterval(helloTimer);
+    helloTimer = setInterval(() => {
+      if (i >= flat.length) {
+        clearInterval(helloTimer); hello.classList.add("typed");
+        helloTimer = setTimeout(closeHello, 4200);
+        return;
+      }
+      const [ch, c] = flat[i++];
+      const s = document.createElement("span");
+      if (c) s.className = c;
+      s.textContent = ch; helloText.appendChild(s);
+    }, reduce ? 0 : 55);
+  }
+  function closeHello() {
+    clearTimeout(helloTimer);
+    hello.classList.add("out");
+    setTimeout(() => { hello.hidden = true; hello.classList.remove("out"); }, 600);
+  }
+  hello.addEventListener("click", closeHello);
+  addEventListener("keydown", e => { if (e.key === "Escape" && !hello.hidden) closeHello(); });
+
+  /* ================= expand project ================= */
   const ghostToggle = $("#ghostToggle"), ghostBody = $("#ghostBody");
   ghostToggle.addEventListener("click", () => {
     const open = ghostBody.classList.toggle("open");
@@ -200,11 +278,11 @@
     termOut.appendChild(d); termOut.scrollTop = termOut.scrollHeight;
   }
   const cmds = {
-    help: () => ["доступные: help, whoami, stack, ghostsee --status, date, clear"],
+    help: () => ["доступные: help, whoami, ghostsee --status, date, hello, clear"],
     whoami: () => ["morphynne — developer. web, telegram-боты, linux."],
-    stack: () => ["js · python · html/css · telegram bot api · linux"],
-    "ghostsee --status": () => ["ghostsee: <span class='ok'>ACTIVE</span> · telegram bot online"],
+    "ghostsee --status": () => ["ghostsee: <span class='ok'>ACTIVE</span> · показывает удалённые и изменённые сообщения"],
     date: () => [esc(new Date().toLocaleString("ru-RU"))],
+    hello: () => { showHello(); return ["hello from morphynne 🖤"]; },
     clear: () => { termOut.innerHTML = ""; return []; },
   };
   function run(raw) {
@@ -213,11 +291,11 @@
     print(`<span class="cmd">$ ${esc(raw)}</span>`);
     const fn = cmds[c];
     if (!fn) { print(`команда не найдена: ${esc(c)}. напиши help`, "err"); return; }
-    fn().forEach((line, i) => setTimeout(() => print(line, "ok"), reduce ? 0 : i * 120));
+    fn().forEach((line, i) => setTimeout(() => print(line, "ok"), reduce ? 0 : i * 110));
   }
   termForm.addEventListener("submit", e => { e.preventDefault(); run(termInput.value); termInput.value = ""; });
   $$("[data-cmd]").forEach(b => b.addEventListener("click", () => run(b.dataset.cmd)));
-  print("morphynne terminal v3.0 — напиши <span class='cmd'>help</span>", "note");
+  print("morphynne terminal v4.0 — напиши <span class='cmd'>help</span>", "note");
 
   /* ================= mood ================= */
   const mood = $("#mood"), moodVal = $("#moodVal"), moodText = $("#moodText");
@@ -226,20 +304,23 @@
   mood.addEventListener("input", updMood); updMood();
 
   /* ================= player ================= */
-  const audio = $("#audio"), card = $("#music"), playBtn = $("#playBtn");
+  const audio = $("#audio"), music = $("#music"), playBtn = $("#playBtn");
   const bar = $("#bar"), fill = $("#fill"), knob = $("#knob"), cur = $("#cur"), dur = $("#dur");
   const vol = $("#vol"), loopBtn = $("#loopBtn");
   const fmt = s => isFinite(s) ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` : "0:00";
   audio.volume = .9;
   audio.addEventListener("loadedmetadata", () => dur.textContent = fmt(audio.duration));
+  let lastTU = 0;
   audio.addEventListener("timeupdate", () => {
+    const now = performance.now();
+    if (now - lastTU < 120) return; lastTU = now; // throttle UI writes
     const p = audio.duration ? audio.currentTime / audio.duration : 0;
     fill.style.width = p * 100 + "%"; knob.style.left = p * 100 + "%";
     cur.textContent = fmt(audio.currentTime);
   });
-  audio.addEventListener("play", () => card.classList.add("playing"));
-  audio.addEventListener("pause", () => card.classList.remove("playing"));
-  audio.addEventListener("ended", () => card.classList.remove("playing"));
+  audio.addEventListener("play", () => music.classList.add("playing"));
+  audio.addEventListener("pause", () => music.classList.remove("playing"));
+  audio.addEventListener("ended", () => music.classList.remove("playing"));
   playBtn.addEventListener("click", () => audio.paused ? audio.play() : audio.pause());
   $("#rewBtn").addEventListener("click", () => audio.currentTime = Math.max(0, audio.currentTime - 10));
   $("#fwdBtn").addEventListener("click", () => audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 10));
@@ -259,258 +340,112 @@
   const endSeek = () => seeking = false;
   bar.addEventListener("pointerup", endSeek);
   bar.addEventListener("pointercancel", endSeek);
-  // keyboard: space = play/pause when not typing
   addEventListener("keydown", e => {
     if (e.code !== "Space" || /input|textarea/i.test(document.activeElement.tagName)) return;
-    if (!card.getBoundingClientRect().height) return;
     e.preventDefault(); audio.paused ? audio.play() : audio.pause();
   });
-  // cover parallax tilt on desktop
-  const cover = $("#cover");
-  if (fine && !reduce) cover.addEventListener("pointermove", e => {
-    const r = cover.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
-    cover.style.transform = `perspective(600px) rotateX(${-y * 14}deg) rotateY(${x * 14}deg) scale(1.03)`;
-  });
-  if (fine) cover.addEventListener("pointerleave", () => cover.style.transform = "");
 
-  /* ================= konami rain ================= */
-  function konamiRain(word) {
-    if (reduce) return;
-    for (let i = 0; i < 26; i++) {
-      const s = document.createElement("span");
-      s.className = "konami-rain"; s.textContent = word;
-      s.style.left = Math.random() * 100 + "vw";
-      s.style.animationDuration = (2.4 + Math.random() * 2.4) + "s";
-      s.style.animationDelay = (Math.random() * 1.2) + "s";
-      document.body.appendChild(s); setTimeout(() => s.remove(), 5200);
-    }
-  }
-  const seq = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
-  let sp = 0;
-  addEventListener("keydown", e => {
-    if (e.key === seq[sp]) { sp++; if (sp === seq.length) { sp = 0; konamiRain("↑↑↓↓←→←→BA"); say("cheat mode 😈"); } }
-    else sp = e.key === seq[0] ? 1 : 0;
-  });
-
-  /* ================= particles + cursor trail ================= */
+  /* ================= canvas particles (throttled, pauses when hidden) ================= */
   const cv = $("#fx"), ctx = cv.getContext("2d");
-  const dpr = Math.min(devicePixelRatio || 1, 2);
-  let W = innerWidth, H = innerHeight, pts = [];
-  const mouse = { x: -999, y: -999 };
-  const trail = [];
+  const dpr = Math.min(devicePixelRatio || 1, 1.5);
+  let W = 0, H = 0, pts = [];
   let rgb = "239,41,71";
   function refreshRGB() {
-    const v = getComputedStyle(root).getPropertyValue("--accent-rgb").trim();
+    const v = getComputedStyle(root).getPropertyValue("--rgb").trim();
     if (v) rgb = v;
   }
-  function size() {
+  function sizeCanvas() {
     W = innerWidth; H = innerHeight;
     cv.width = W * dpr; cv.height = H * dpr;
     cv.style.width = W + "px"; cv.style.height = H + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const n = small ? 26 : 60;
+    const n = small ? 16 : 36;
     pts = Array.from({ length: n }, () => ({
       x: Math.random() * W, y: Math.random() * H,
-      vx: (Math.random() - .5) * .3, vy: (Math.random() - .5) * .3, r: Math.random() * 1.6 + .4,
+      vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25, r: Math.random() * 1.4 + .4,
     }));
   }
-  function frame() {
+  let mouse = { x: -999, y: -999 }, lastFrame = 0;
+  const maxDist = small ? 80 : 110;
+  function frame(t) {
+    raf = requestAnimationFrame(frame);
+    if (t - lastFrame < (small ? 40 : 28)) return; // ~25-35fps cap
+    lastFrame = t;
     ctx.clearRect(0, 0, W, H);
     for (const p of pts) {
       p.x += p.vx; p.y += p.vy;
       const dx = p.x - mouse.x, dy = p.y - mouse.y, d = Math.hypot(dx, dy);
-      if (d < 110 && d > 0) { p.x += dx / d * 1.2; p.y += dy / d * 1.2; }
-      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
-      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283);
-      ctx.fillStyle = `rgba(${rgb},.7)`; ctx.fill();
+      if (d < 100 && d > 0) { p.x += dx / d * 1.1; p.y += dy / d * 1.1; }
+      if (p.x < 0) p.x = W; else if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; else if (p.y > H) p.y = 0;
+      ctx.fillStyle = `rgba(${rgb},.65)`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
     }
-    const max = small ? 90 : 120;
+    ctx.lineWidth = .6;
     for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
       const a = pts[i], b = pts[j], d = Math.hypot(a.x - b.x, a.y - b.y);
-      if (d < max) {
-        ctx.strokeStyle = `rgba(${rgb},${(1 - d / max) * .2})`; ctx.lineWidth = .6;
+      if (d < maxDist) {
+        ctx.strokeStyle = `rgba(${rgb},${(1 - d / maxDist) * .18})`;
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
       }
     }
-    for (let i = trail.length - 1; i >= 0; i--) {
-      const t = trail[i]; t.life -= .045;
-      if (t.life <= 0) { trail.splice(i, 1); continue; }
-      ctx.beginPath(); ctx.arc(t.x, t.y, 2.6 * t.life, 0, 6.283);
-      ctx.fillStyle = `rgba(${rgb},${t.life * .55})`; ctx.fill();
-    }
-    if (!reduce) requestAnimationFrame(frame);
   }
-  size(); refreshRGB(); frame();
-  let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(size, 150); });
+  let raf = 0;
+  function startCanvas() { if (!raf && !reduce) raf = requestAnimationFrame(frame); }
+  function stopCanvas() { cancelAnimationFrame(raf); raf = 0; }
+  document.addEventListener("visibilitychange", () => document.hidden ? stopCanvas() : startCanvas());
+  sizeCanvas(); refreshRGB(); startCanvas();
+  let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { sizeCanvas(); if (rainOn) rainSize(); }, 150); }, { passive: true });
+  if (reduce) { const c = cv.getContext("2d"); c.clearRect(0, 0, W, H); }
 
-  /* ================= desktop pointer effects ================= */
+  /* ================= pointer effects (rAF-throttled, desktop only) ================= */
   if (fine && !reduce) {
-    const dot = $("#cursor");
+    let pending = null;
+    const queue = fn => { if (pending) return; pending = requestAnimationFrame(() => { pending = null; fn(); }); };
     addEventListener("pointermove", e => {
       mouse.x = e.clientX; mouse.y = e.clientY;
-      dot.style.opacity = "1";
-      dot.style.transform = `translate(${e.clientX}px,${e.clientY}px)`;
-      trail.push({ x: e.clientX, y: e.clientY, life: 1 });
-      if (trail.length > 28) trail.shift();
-    });
-    document.addEventListener("pointerleave", () => dot.style.opacity = "0");
-    $$("a, button, input, .pill, .sw, .stat, .avatar-btn").forEach(el => {
-      el.addEventListener("pointerenter", () => dot.classList.add("hover"));
-      el.addEventListener("pointerleave", () => dot.classList.remove("hover"));
-    });
-    $$(".magnetic").forEach(el => {
-      el.addEventListener("pointermove", e => {
-        const r = el.getBoundingClientRect();
-        el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .2}px,${(e.clientY - r.top - r.height / 2) * .28}px)`;
-      });
-      el.addEventListener("pointerleave", () => el.style.transform = "");
-    });
-    $$(".spot, .status-card, .pill, .card, .project-card, .link-card").forEach(el => el.addEventListener("pointermove", e => {
-      const r = el.getBoundingClientRect();
-      el.style.setProperty("--sx", (e.clientX - r.left) + "px");
-      el.style.setProperty("--sy", (e.clientY - r.top) + "px");
-      el.style.setProperty("--mx", (e.clientX - r.left) + "px");
-      el.style.setProperty("--my", (e.clientY - r.top) + "px");
-    }));
+    }, { passive: true });
     const tilt = $("#tilt"), aw = $(".avatar-wrap");
-    aw.addEventListener("pointermove", e => {
+    aw.addEventListener("pointermove", e => queue(() => {
       const r = tilt.getBoundingClientRect();
       const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
-      tilt.style.transform = `perspective(500px) rotateX(${-y * 20}deg) rotateY(${x * 20}deg)`;
-    });
+      tilt.style.transform = `perspective(500px) rotateX(${-y * 16}deg) rotateY(${x * 16}deg)`;
+    }));
     aw.addEventListener("pointerleave", () => tilt.style.transform = "");
-    // glitch flash on handle hover (desktop)
-    handle.addEventListener("pointerenter", () => { handle.classList.add("glitch-flash"); setTimeout(() => handle.classList.remove("glitch-flash"), 400); });
+    $$(".spot, .card, .project, .link").forEach(el => el.addEventListener("pointermove", e => queue(() => {
+      const r = el.getBoundingClientRect();
+      el.style.backgroundImage = `radial-gradient(240px circle at ${e.clientX - r.left}px ${e.clientY - r.top}px, rgba(var(--rgb),.12), transparent 60%)`;
+    })));
+    $$(".spot, .card, .project, .link").forEach(el => el.addEventListener("pointerleave", () => el.style.backgroundImage = ""));
+    $$(".act").forEach(el => {
+      el.addEventListener("pointermove", e => queue(() => {
+        const r = el.getBoundingClientRect();
+        el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .08}px,${(e.clientY - r.top - r.height / 2) * .12}px)`;
+      }));
+      el.addEventListener("pointerleave", () => el.style.transform = "");
+    });
   }
 
-  /* ================= ripple on tap ================= */
-  $$(".ripple").forEach(el => el.addEventListener("pointerdown", e => {
-    const r = el.getBoundingClientRect(), s = Math.max(r.width, r.height);
-    const d = document.createElement("span");
-    d.className = "ripple-dot";
-    d.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`;
-    el.appendChild(d); setTimeout(() => d.remove(), 700);
-  }));
-
-  /* ================= nav highlight ================= */
+  /* ================= progress line + nav highlight (one scroll listener) ================= */
+  const prog = $("#progress");
   const navLinks = $$(".section-nav a");
   const secs = navLinks.map(a => $(a.getAttribute("href"))).filter(Boolean);
-  addEventListener("scroll", () => {
+  let scrollPending = false;
+  function onScroll() {
+    scrollPending = false;
+    const h = document.documentElement.scrollHeight - innerHeight;
+    prog.style.transform = `scaleX(${h > 0 ? scrollY / h : 0})`;
     let idx = 0;
     secs.forEach((s, i) => { if (s.getBoundingClientRect().top < innerHeight * .4) idx = i; });
     navLinks.forEach((a, i) => a.classList.toggle("active", i === idx));
-  }, { passive: true });
+  }
+  addEventListener("scroll", () => { if (!scrollPending) { scrollPending = true; requestAnimationFrame(onScroll); } }, { passive: true });
 
-  /* ================= to top ================= */
+  /* ================= dock + to top ================= */
+  $$(".dock button").forEach(b => b.addEventListener("click", () => {
+    const target = b.dataset.go === "profile" ? document.body : $("#" + b.dataset.go);
+    if (target) target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    $$(".dock button").forEach(x => x.classList.toggle("on", x === b));
+  }));
   $("#toTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-
-  /* ================= extra effects ================= */
-  // text scramble decode
-  const GLYPHS = "01<>/#$%&*+=?✳";
-  function scrambleEl(el, final) {
-    if (reduce) return;
-    const node = [...el.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
-    if (!node) return;
-    const target = final ?? node.textContent;
-    let frame = 0; const total = 18;
-    const id = setInterval(() => {
-      frame++;
-      let out = "";
-      for (let i = 0; i < target.length; i++) {
-        out += i < frame * target.length / total ? target[i] : GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-      }
-      node.textContent = out;
-      if (frame >= total) { clearInterval(id); node.textContent = target; }
-    }, 32);
-  }
-  const scrambleIO = new IntersectionObserver(es => es.forEach(e => {
-    if (e.isIntersecting) { scrambleEl(e.target); scrambleIO.unobserve(e.target); }
-  }), { threshold: .6 });
-  $$(".scramble").forEach(el => scrambleIO.observe(el));
-  $$(".link-card strong").forEach(el => el.addEventListener("pointerenter", () => {
-    const original = el.textContent; scrambleEl(el, original);
-  }));
-
-  // scanlines + matrix rain toggles
-  const scanBtn = $("#scanBtn"), rainBtn = $("#rainBtn");
-  scanBtn.addEventListener("click", () => {
-    const on = document.body.classList.toggle("scan");
-    scanBtn.setAttribute("aria-pressed", String(on));
-  });
-  const rc = $("#rain"), rctx = rc.getContext("2d");
-  let rainOn = false, rainTimer, drops = [];
-  function rainSize() {
-    rc.width = innerWidth; rc.height = innerHeight;
-    const cols = Math.floor(innerWidth / 16);
-    drops = Array.from({ length: cols }, () => Math.random() * -innerHeight / 16);
-  }
-  function rainStep() {
-    rctx.fillStyle = "rgba(8,8,8,.12)";
-    rctx.fillRect(0, 0, rc.width, rc.height);
-    rctx.font = "14px IBM Plex Mono, monospace";
-    drops.forEach((y, i) => {
-      const ch = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-      rctx.fillStyle = `rgba(${rgb},.9)`;
-      rctx.fillText(ch, i * 16, y * 16);
-      drops[i] = y * 16 > rc.height && Math.random() > .975 ? 0 : y + 1;
-    });
-  }
-  rainBtn.addEventListener("click", () => {
-    rainOn = !rainOn;
-    document.body.classList.toggle("rain", rainOn);
-    rainBtn.setAttribute("aria-pressed", String(rainOn));
-    if (rainOn) { rainSize(); rctx.clearRect(0, 0, rc.width, rc.height); rainTimer = setInterval(rainStep, 60); }
-    else clearInterval(rainTimer);
-  });
-  addEventListener("resize", () => { if (rainOn) rainSize(); });
-
-  // shockwave on every tap/click
-  const shockLayer = $("#shockLayer");
-  if (!reduce) addEventListener("pointerdown", e => {
-    if (e.target.closest("input, textarea")) return;
-    const s = document.createElement("span");
-    s.className = "shock";
-    s.style.left = e.clientX + "px"; s.style.top = e.clientY + "px";
-    shockLayer.appendChild(s); setTimeout(() => s.remove(), 720);
-  });
-
-  // confetti burst from an element
-  function confetti(el) {
-    if (reduce) return;
-    const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    const colors = [getComputedStyle(root).getPropertyValue("--red").trim(), "#ffffff", getComputedStyle(root).getPropertyValue("--red-soft").trim()];
-    for (let i = 0; i < 26; i++) {
-      const p = document.createElement("span");
-      p.className = "confetti";
-      p.style.background = colors[i % colors.length];
-      p.style.left = cx + "px"; p.style.top = cy + "px";
-      document.body.appendChild(p);
-      const a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 90;
-      p.animate([
-        { transform: "translate(0,0) rotate(0deg)", opacity: 1 },
-        { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + 80}px) rotate(${Math.random() * 720}deg)`, opacity: 0 },
-      ], { duration: 900 + Math.random() * 500, easing: "cubic-bezier(.2,.7,.3,1)" }).onfinish = () => p.remove();
-    }
-  }
-  $$(".pill, .btn").forEach(b => b.addEventListener("click", () => {
-    if (b.classList.contains("copied") || b.dataset.copy !== undefined || b.id === "copyNick") confetti(b);
-  }));
-
-  // parallax on scroll
-  const par = $$(".parallax");
-  if (!reduce) addEventListener("scroll", () => {
-    par.forEach(el => {
-      const r = el.getBoundingClientRect();
-      const offset = (r.top + r.height / 2 - innerHeight / 2) * (+el.dataset.speed || .1);
-      el.style.transform = `translateY(${-offset}px)`;
-    });
-  }, { passive: true });
-
-  // stat bump on hover
-  $$(".stat").forEach(s => s.addEventListener("pointerenter", () => {
-    s.classList.remove("bump"); void s.offsetWidth; s.classList.add("bump");
-  }));
-
 })();

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#080808">
-<meta name="description" content="Morphynne — developer. Проекты, музыка и контакты.">
+<meta name="description" content="Morphynne — developer. Ghostsee, проекты и музыка.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Morphynne — developer">
 <meta property="og:description" content="Цифровая личность / создатель проектов. Код, инструменты и немного хаоса.">
@@ -20,57 +20,59 @@
 <body>
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="grid-bg" aria-hidden="true"></div>
-<div class="glow-orb" aria-hidden="true"></div>
-<div class="glow-orb b" aria-hidden="true"></div>
-<div class="grain" aria-hidden="true"></div>
-<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-<div class="scanlines" aria-hidden="true"></div>
+<div class="glow" aria-hidden="true"></div>
 <canvas id="rain" aria-hidden="true"></canvas>
-<div class="shock-layer" id="shockLayer" aria-hidden="true"></div>
+<div class="scanlines" aria-hidden="true"></div>
 <div class="progress-line" id="progress" aria-hidden="true"></div>
-<div class="cursor-dot" id="cursor" aria-hidden="true"></div>
+<div class="click-layer" id="clickLayer" aria-hidden="true"></div>
 
-<!-- boot intro -->
+<!-- boot -->
 <div id="boot">
   <div class="boot-inner">
-    <div class="boot-top"><span>morphynne.bio</span><span>boot v3.0</span></div>
+    <div class="boot-top"><span>morphynne.bio</span><span>boot v4.0</span></div>
     <pre id="bootCode" class="boot-code"></pre>
     <div class="boot-bar"><i id="bootBar"></i></div>
     <span class="boot-skip">нажми, чтобы пропустить</span>
   </div>
 </div>
 
+<!-- hello easter egg -->
+<div class="hello" id="hello" hidden role="dialog" aria-label="Пасхалка">
+  <p class="hello-text" id="helloText"></p>
+  <span class="hello-heart" aria-hidden="true">🖤</span>
+  <span class="hello-hint">нажми, чтобы закрыть</span>
+</div>
+
 <header class="topline fx" style="--d:0s">
-  <a class="mini-brand magnetic" href="#profile">
-    <span class="logo">m.</span>
-    <span>MORPHYNNE<span class="red blink">_</span></span>
-  </a>
-  <div class="top-right">
-    <span class="live-label"><i></i>ONLINE</span>
-    <div class="fx-toggles">
-      <button class="fx-btn" id="scanBtn" type="button" aria-pressed="false" title="сканлайны">scan</button>
-      <button class="fx-btn" id="rainBtn" type="button" aria-pressed="false" title="дождь из символов">rain</button>
-    </div>
-    <div class="swatches" role="group" aria-label="Акцентный цвет">
-      <button class="sw on" data-theme="red" style="--c:#ef2947" aria-label="Красный"></button>
-      <button class="sw" data-theme="cyan" style="--c:#2fd6ff" aria-label="Циан"></button>
-      <button class="sw" data-theme="violet" style="--c:#a06bff" aria-label="Фиолетовый"></button>
+  <a class="mini-brand" href="#profile"><span class="logo">m.</span><span>MORPHYNNE<span class="red blink">_</span></span></a>
+  <div class="fx-menu">
+    <button class="fx-open" id="fxOpen" type="button" aria-expanded="false" aria-controls="fxPanel">fx</button>
+    <div class="fx-panel" id="fxPanel" hidden>
+      <div class="fx-row">
+        <span class="fx-label">акцент</span>
+        <div class="swatches" role="group" aria-label="Акцентный цвет">
+          <button class="sw on" data-theme="red" style="--c:#ef2947" aria-label="Красный"></button>
+          <button class="sw" data-theme="cyan" style="--c:#2fd6ff" aria-label="Циан"></button>
+          <button class="sw" data-theme="violet" style="--c:#a06bff" aria-label="Фиолетовый"></button>
+        </div>
+      </div>
+      <button class="fx-item" id="scanBtn" type="button" aria-pressed="false"><span>сканлайны</span><i></i></button>
+      <button class="fx-item" id="rainBtn" type="button" aria-pressed="false"><span>дождь</span><i></i></button>
+      <button class="fx-item" id="calmBtn" type="button" aria-pressed="false"><span>спокойный режим</span><i></i></button>
     </div>
   </div>
 </header>
 
 <main>
-<section class="profile-section" id="profile">
-  <div class="profile-meta fx" style="--d:.1s"><span>PERSONAL PAGE</span><span>DEVELOPER / WEB</span></div>
+<section class="profile" id="profile">
+  <div class="meta fx" style="--d:.1s"><span>PERSONAL PAGE</span><span>DEVELOPER / WEB</span></div>
 
   <div class="avatar-wrap fx" style="--d:.2s">
-    <div class="avatar-glow"></div>
-    <div class="avatar-blob" aria-hidden="true"></div>
-    <div class="avatar-ring"></div>
-    <div class="avatar-ring ring-2"></div>
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
     <div class="orbit"><i></i></div>
     <button class="avatar-btn" id="avatarBtn" type="button" aria-label="Аватар">
-      <div class="avatar-tilt" id="tilt"><img src="avatar.png" alt="Morphynne" width="108" height="108" decoding="async"></div>
+      <img id="tilt" src="avatar.png" alt="Morphynne" width="120" height="120" decoding="async">
     </button>
     <span class="online-dot"></span>
     <span class="burst-count" id="burstCount">0</span>
@@ -78,35 +80,34 @@
 
   <div class="identity fx" style="--d:.3s">
     <h1 class="handle" id="handle">MORPHYNNE<span class="red blink">_</span></h1>
-    <div class="realname">developer / web / telegram / linux</div>
+    <p class="role">developer / web / telegram / linux</p>
     <p class="bio"><span id="bioText"></span><span class="caret"></span></p>
   </div>
 
-  <!-- buttons moved up -->
-  <div class="profile-actions fx" style="--d:.4s">
-    <a class="pill primary magnetic ripple" href="https://t.me/morphynne" target="_blank" rel="noopener"><span>Написать</span><b>↗</b></a>
-    <button class="pill magnetic ripple" id="copyNick" type="button"><span>Скопировать ник</span><b>⧉</b></button>
-    <button class="pill magnetic ripple" id="shareBtn" type="button"><span>Поделиться</span><b>⇪</b></button>
-    <button class="pill magnetic ripple" data-go="music" type="button"><span>Слушать</span><b>♫</b></button>
+  <div class="tags fx" style="--d:.4s"><span>developer</span><span>web</span><span>telegram</span><span>linux</span></div>
+
+  <div class="status fx spot" style="--d:.5s">
+    <span class="led"></span>
+    <div><small>сейчас</small><strong id="statusText">coding something</strong></div>
+    <span class="status-num" id="statusNum">↗ 01</span>
   </div>
 
-  <div class="tags fx stagger" style="--d:.5s"><span>developer</span><span>web</span><span>telegram</span><span>linux</span></div>
-
-  <div class="status-card fx spot" style="--d:.6s">
-    <div class="status-left">
-      <span class="status-led"></span>
-      <div><small>СЕЙЧАС</small><strong><span id="statusText">coding something</span><span class="caret"></span></strong></div>
-    </div>
-    <span class="status-right" id="statusNum">↗ 01</span>
-  </div>
-
-  <div class="stats fx" style="--d:.7s">
+  <div class="stats fx" style="--d:.6s">
     <div class="stat"><b data-count="1">0</b><small>проект</small></div>
     <div class="stat"><b data-count="1">0</b><small>трек</small></div>
     <div class="stat"><b data-count="999">0</b><small>идей</small></div>
   </div>
 
-  <div class="card skills fx spot" data-tilt style="--d:.8s">
+  <!-- actions: 1 big + 2 small, fixed heights -->
+  <div class="actions fx" style="--d:.7s">
+    <a class="act primary" href="https://t.me/morphynne" target="_blank" rel="noopener"><span>Написать в Telegram</span><b>↗</b></a>
+    <div class="act-row">
+      <button class="act" id="copyNick" type="button"><span>Ник</span><b>⧉</b></button>
+      <button class="act" id="shareBtn" type="button"><span>Поделиться</span><b>⇪</b></button>
+    </div>
+  </div>
+
+  <div class="card skills fx" style="--d:.8s">
     <div class="card-head"><span>stack</span><span class="muted">[ dev ]</span></div>
     <div class="skill"><span>JavaScript</span><div class="meter"><i data-level="82"></i></div><em>82</em></div>
     <div class="skill"><span>Python</span><div class="meter"><i data-level="76"></i></div><em>76</em></div>
@@ -117,30 +118,23 @@
 </section>
 
 <div class="ticker" aria-hidden="true"><div class="ticker-track">
-  <span>DEVELOPER</span><i>✳</i><span>WEB</span><i>✳</i><span>TELEGRAM</span><i>✳</i><span>LINUX</span><i>✳</i><span>BUILDING</span><i>✳</i><span>CODE</span><i>✳</i>
-  <span>DEVELOPER</span><i>✳</i><span>WEB</span><i>✳</i><span>TELEGRAM</span><i>✳</i><span>LINUX</span><i>✳</i><span>BUILDING</span><i>✳</i><span>CODE</span><i>✳</i>
+  <span>DEVELOPER</span><i>✳</i><span>WEB</span><i>✳</i><span>TELEGRAM</span><i>✳</i><span>LINUX</span><i>✳</i><span>GHOSTSEE</span><i>✳</i><span>CODE</span><i>✳</i>
+  <span>DEVELOPER</span><i>✳</i><span>WEB</span><i>✳</i><span>TELEGRAM</span><i>✳</i><span>LINUX</span><i>✳</i><span>GHOSTSEE</span><i>✳</i><span>CODE</span><i>✳</i>
 </div></div>
 
-<!-- MUSIC -->
-<section class="music-card reveal" id="music">
-  <div class="music-top">
-    <span class="eyebrow"><i class="sound-dot"></i>NOW PLAYING</span>
-    <span class="music-format">MP3 · KAI ANGEL</span>
-  </div>
-
-  <div class="cover-row parallax" data-speed="0.08">
-    <div class="cover" id="cover">
-      <img src="cover.jpg" alt="Обложка: Kai Angel — Jump" width="600" height="600" decoding="async">
-    </div>
+<!-- music -->
+<section class="music reveal" id="music">
+  <div class="music-top"><span class="eyebrow"><i class="dot-pulse"></i>NOW PLAYING</span><span>MP3 · KAI ANGEL</span></div>
+  <div class="cover-row">
+    <div class="cover" id="cover"><img src="cover.jpg" alt="Обложка: Kai Angel — Jump" width="480" height="480" loading="lazy" decoding="async"></div>
     <div class="track-info">
       <h2 class="track-title">Jump</h2>
       <p class="track-artist">Kai Angel</p>
       <div class="viz" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
     </div>
   </div>
-
   <div class="controls">
-    <button class="play magnetic" id="playBtn" type="button" aria-label="Играть">
+    <button class="play" id="playBtn" type="button" aria-label="Играть">
       <svg viewBox="0 0 24 24" class="i-play"><path d="M7 4.5v15l13-7.5z"/></svg>
       <svg viewBox="0 0 24 24" class="i-pause"><path d="M6 4.5h4v15H6zM14 4.5h4v15h-4z"/></svg>
     </button>
@@ -148,51 +142,46 @@
     <span class="time"><span id="cur">0:00</span> / <span id="dur">0:00</span></span>
   </div>
   <div class="row-btns">
-    <button class="chip-btn magnetic" id="rewBtn" type="button">−10с</button>
-    <button class="chip-btn magnetic" id="fwdBtn" type="button">+10с</button>
-    <button class="chip-btn magnetic" id="loopBtn" type="button">⟲ повтор</button>
+    <button class="chip" id="rewBtn" type="button">−10с</button>
+    <button class="chip" id="fwdBtn" type="button">+10с</button>
+    <button class="chip" id="loopBtn" type="button">повтор</button>
     <label class="vol">vol <input id="vol" type="range" min="0" max="1" step="0.05" value="0.9"></label>
   </div>
   <audio id="audio" preload="metadata" src="jump.mp3"></audio>
 </section>
 
 <nav class="section-nav reveal" aria-label="Разделы">
-  <a href="#profile" class="active">Profile</a>
-  <a href="#music">Music</a>
-  <a href="#projects">Projects</a>
-  <a href="#terminal">Terminal</a>
-  <a href="#updates">Updates</a>
-  <a href="#links">Links</a>
+  <a href="#profile" class="active">Profile</a><a href="#music">Music</a><a href="#projects">Projects</a><a href="#terminal">Terminal</a><a href="#updates">Updates</a><a href="#links">Links</a>
 </nav>
 
-<!-- PROJECTS -->
-<section class="content-section reveal" id="projects">
-  <div class="section-title"><span class="label scramble"><i></i>PROJECTS</span><span class="count">[ 02 ]</span></div>
+<!-- projects -->
+<section class="block reveal" id="projects">
+  <div class="block-title"><span class="label scramble"><i></i>PROJECTS</span><span class="muted">[ 02 ]</span></div>
 
-  <article class="project-card spot ripple holo" id="ghostCard">
+  <article class="project spot" id="ghostCard">
     <div class="project-top">
       <div class="project-icon">G<span>✳</span></div>
       <div class="project-info">
-        <div class="project-name">Ghostsee <span class="project-state">ACTIVE</span></div>
-        <p>Telegram-инструменты и автоматизация.</p>
-        <div class="chips"><span>TELEGRAM</span><span>BOT</span><span>AUTOMATION</span></div>
+        <div class="project-name">Ghostsee <span class="state">ACTIVE</span></div>
+        <p>Telegram-бот, который показывает удалённые и изменённые сообщения, а также одноразовые фото и видео.</p>
+        <div class="chips"><span>УДАЛЁННЫЕ</span><span>ИЗМЕНЁННЫЕ</span><span>ОДНОРАЗОВЫЕ</span></div>
       </div>
     </div>
-    <button class="expand magnetic" id="ghostToggle" type="button" aria-expanded="false"><span>подробнее</span> <b>+</b></button>
+    <button class="expand" id="ghostToggle" type="button" aria-expanded="false"><span>подробнее</span><b>+</b></button>
     <div class="expand-body" id="ghostBody"><div class="expand-inner">
-      <p>Бот для Telegram: автоматизация рутины и простые утилиты прямо в чате.</p>
-      <div class="btn-row">
-        <a class="pill primary magnetic ripple" href="https://t.me/Ghostseebot" target="_blank" rel="noopener"><span>Открыть бота</span><b>↗</b></a>
-        <button class="pill magnetic ripple" data-copy="@Ghostseebot" type="button"><span>Копировать</span><b>⧉</b></button>
+      <p>Бот хранит исходные версии сообщений и медиа, которые собеседник удалил, изменил или отправил как одноразовые, и показывает их тебе. Работает как инструмент в твоём чате с ботом.</p>
+      <div class="btns2">
+        <a class="act primary" href="https://t.me/Ghostseebot" target="_blank" rel="noopener"><span>Открыть бота</span><b>↗</b></a>
+        <button class="act" data-copy="@Ghostseebot" type="button"><span>Копировать</span><b>⧉</b></button>
       </div>
     </div></div>
   </article>
 
-  <article class="project-card soon holo">
+  <article class="project soon">
     <div class="project-top">
       <div class="project-icon dashed">?</div>
       <div class="project-info">
-        <div class="project-name">Следующий проект <span class="project-state muted">SOON</span></div>
+        <div class="project-name">Следующий проект <span class="state muted">SOON</span></div>
         <p>Что-то в работе. Скоро.</p>
         <div class="progress"><i data-level="35"></i></div>
       </div>
@@ -200,9 +189,9 @@
   </article>
 </section>
 
-<!-- TERMINAL -->
-<section class="content-section reveal" id="terminal">
-  <div class="section-title"><span class="label scramble"><i></i>TERMINAL</span><span class="count">[ try me ]</span></div>
+<!-- terminal -->
+<section class="block reveal" id="terminal">
+  <div class="block-title"><span class="label scramble"><i></i>TERMINAL</span><span class="muted">[ try me ]</span></div>
   <div class="term">
     <div class="term-out" id="termOut" aria-live="polite"></div>
     <form class="term-in" id="termForm" autocomplete="off">
@@ -212,7 +201,6 @@
     <div class="term-chips">
       <button type="button" data-cmd="help">help</button>
       <button type="button" data-cmd="whoami">whoami</button>
-      <button type="button" data-cmd="stack">stack</button>
       <button type="button" data-cmd="ghostsee --status">ghostsee --status</button>
       <button type="button" data-cmd="date">date</button>
       <button type="button" data-cmd="clear">clear</button>
@@ -220,22 +208,21 @@
   </div>
 </section>
 
-<!-- UPDATES -->
-<section class="content-section reveal" id="updates">
-  <div class="section-title"><span class="label scramble"><i></i>LATEST UPDATES</span><span class="count">[ LOG ]</span></div>
-  <div class="update-list stagger">
-    <article class="update"><time>20.10</time><div><strong>Morphynne — новая версия</strong><p>Новый сайт, плеер и терминал.</p></div><span class="update-mark">NEW</span></article>
-    <article class="update"><time>16.10</time><div><strong>Ghostsee</strong><p>Работа над Telegram-инструментами продолжается.</p></div><span class="update-mark muted">DEV</span></article>
+<!-- updates -->
+<section class="block reveal" id="updates">
+  <div class="block-title"><span class="label scramble"><i></i>LATEST UPDATES</span><span class="muted">[ LOG ]</span></div>
+  <div class="updates">
+    <article class="update"><time>20.10</time><div><strong>Morphynne — новая версия</strong><p>Новый сайт, плеер и терминал.</p></div><span class="mark">NEW</span></article>
+    <article class="update"><time>16.10</time><div><strong>Ghostsee</strong><p>Работа над функцией просмотра удалённых и изменённых сообщений.</p></div><span class="mark dim">DEV</span></article>
   </div>
 </section>
 
-<!-- LINKS -->
-<section class="content-section reveal" id="links">
-  <div class="section-title"><span class="label scramble"><i></i>FIND ME</span><span class="count">[ 02 ]</span></div>
-  <a class="link-card spot ripple magnetic" href="https://t.me/morphynne" target="_blank" rel="noopener"><span class="link-symbol">↗</span><span><strong>Telegram</strong><small>@morphynne</small></span><span class="link-arrow">OPEN ↗</span></a>
-  <a class="link-card spot ripple magnetic" href="https://t.me/Ghostseebot" target="_blank" rel="noopener"><span class="link-symbol">✳</span><span><strong>Ghostsee Bot</strong><small>@Ghostseebot</small></span><span class="link-arrow">OPEN ↗</span></a>
-
-  <div class="card mood spot">
+<!-- links -->
+<section class="block reveal" id="links">
+  <div class="block-title"><span class="label scramble"><i></i>FIND ME</span><span class="muted">[ 02 ]</span></div>
+  <a class="link spot" href="https://t.me/morphynne" target="_blank" rel="noopener"><span class="sym">↗</span><span><strong>Telegram</strong><small>@morphynne</small></span><span class="arr">OPEN ↗</span></a>
+  <a class="link spot" href="https://t.me/Ghostseebot" target="_blank" rel="noopener"><span class="sym">✳</span><span><strong>Ghostsee Bot</strong><small>@Ghostseebot</small></span><span class="arr">OPEN ↗</span></a>
+  <div class="card mood">
     <div class="card-head"><span>mood</span><span class="muted" id="moodVal">chaos: 42%</span></div>
     <input id="mood" type="range" min="0" max="100" value="42" aria-label="Уровень хаоса">
     <p class="muted small" id="moodText">немного хаоса — норма</p>
@@ -243,11 +230,18 @@
 </section>
 
 <footer class="reveal">
-  <span class="footer-brand">MORPHYNNE<span class="red">_</span></span>
-  <span>© <span id="year"></span> / <span>СДЕЛАНО ПО-СВОЕМУ</span></span>
-  <button class="to-top magnetic" id="toTop" type="button" aria-label="Наверх">↑</button>
+  <span class="brand-foot">MORPHYNNE<span class="red">_</span></span>
+  <span>© <span id="year"></span></span>
+  <button class="to-top" id="toTop" type="button" aria-label="Наверх">↑</button>
 </footer>
 </main>
+
+<nav class="dock" aria-label="Быстрый переход">
+  <button data-go="profile" class="on" type="button" aria-label="Профиль">◉</button>
+  <button data-go="music" type="button" aria-label="Музыка">♫</button>
+  <button data-go="projects" type="button" aria-label="Проекты">⌘</button>
+  <button data-go="links" type="button" aria-label="Контакты">✉</button>
+</nav>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="script.js"></script>
