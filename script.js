@@ -28,7 +28,8 @@
     setTimeout(() => btn.classList.remove("copied"), 1100);
   }
   $("#copyNick").addEventListener("click", async e => {
-    await copyText("@morphynne"); flash(e.currentTarget); say("Ник скопирован: @morphynne");
+    const btn = e.currentTarget;
+    await copyText("@morphynne"); flash(btn); say("Ник скопирован: @morphynne");
   });
   $$("[data-copy]").forEach(b => b.addEventListener("click", async () => {
     await copyText(b.dataset.copy); flash(b); say("Скопировано: " + b.dataset.copy);
@@ -38,7 +39,8 @@
   $("#shareBtn").addEventListener("click", async e => {
     const data = { title: "Morphynne", text: "Morphynne — developer", url: location.href };
     if (navigator.share) { try { await navigator.share(data); } catch {} return; }
-    await copyText(location.href); flash(e.currentTarget); say("Ссылка скопирована");
+    const btn = e.currentTarget;
+    await copyText(location.href); flash(btn); say("Ссылка скопирована");
   });
 
   /* ================= theme swatches ================= */
@@ -403,4 +405,112 @@
 
   /* ================= to top ================= */
   $("#toTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+  /* ================= extra effects ================= */
+  // text scramble decode
+  const GLYPHS = "01<>/#$%&*+=?✳";
+  function scrambleEl(el, final) {
+    if (reduce) return;
+    const node = [...el.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+    if (!node) return;
+    const target = final ?? node.textContent;
+    let frame = 0; const total = 18;
+    const id = setInterval(() => {
+      frame++;
+      let out = "";
+      for (let i = 0; i < target.length; i++) {
+        out += i < frame * target.length / total ? target[i] : GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+      }
+      node.textContent = out;
+      if (frame >= total) { clearInterval(id); node.textContent = target; }
+    }, 32);
+  }
+  const scrambleIO = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { scrambleEl(e.target); scrambleIO.unobserve(e.target); }
+  }), { threshold: .6 });
+  $$(".scramble").forEach(el => scrambleIO.observe(el));
+  $$(".link-card strong").forEach(el => el.addEventListener("pointerenter", () => {
+    const original = el.textContent; scrambleEl(el, original);
+  }));
+
+  // scanlines + matrix rain toggles
+  const scanBtn = $("#scanBtn"), rainBtn = $("#rainBtn");
+  scanBtn.addEventListener("click", () => {
+    const on = document.body.classList.toggle("scan");
+    scanBtn.setAttribute("aria-pressed", String(on));
+  });
+  const rc = $("#rain"), rctx = rc.getContext("2d");
+  let rainOn = false, rainTimer, drops = [];
+  function rainSize() {
+    rc.width = innerWidth; rc.height = innerHeight;
+    const cols = Math.floor(innerWidth / 16);
+    drops = Array.from({ length: cols }, () => Math.random() * -innerHeight / 16);
+  }
+  function rainStep() {
+    rctx.fillStyle = "rgba(8,8,8,.12)";
+    rctx.fillRect(0, 0, rc.width, rc.height);
+    rctx.font = "14px IBM Plex Mono, monospace";
+    drops.forEach((y, i) => {
+      const ch = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+      rctx.fillStyle = `rgba(${rgb},.9)`;
+      rctx.fillText(ch, i * 16, y * 16);
+      drops[i] = y * 16 > rc.height && Math.random() > .975 ? 0 : y + 1;
+    });
+  }
+  rainBtn.addEventListener("click", () => {
+    rainOn = !rainOn;
+    document.body.classList.toggle("rain", rainOn);
+    rainBtn.setAttribute("aria-pressed", String(rainOn));
+    if (rainOn) { rainSize(); rctx.clearRect(0, 0, rc.width, rc.height); rainTimer = setInterval(rainStep, 60); }
+    else clearInterval(rainTimer);
+  });
+  addEventListener("resize", () => { if (rainOn) rainSize(); });
+
+  // shockwave on every tap/click
+  const shockLayer = $("#shockLayer");
+  if (!reduce) addEventListener("pointerdown", e => {
+    if (e.target.closest("input, textarea")) return;
+    const s = document.createElement("span");
+    s.className = "shock";
+    s.style.left = e.clientX + "px"; s.style.top = e.clientY + "px";
+    shockLayer.appendChild(s); setTimeout(() => s.remove(), 720);
+  });
+
+  // confetti burst from an element
+  function confetti(el) {
+    if (reduce) return;
+    const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const colors = [getComputedStyle(root).getPropertyValue("--red").trim(), "#ffffff", getComputedStyle(root).getPropertyValue("--red-soft").trim()];
+    for (let i = 0; i < 26; i++) {
+      const p = document.createElement("span");
+      p.className = "confetti";
+      p.style.background = colors[i % colors.length];
+      p.style.left = cx + "px"; p.style.top = cy + "px";
+      document.body.appendChild(p);
+      const a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 90;
+      p.animate([
+        { transform: "translate(0,0) rotate(0deg)", opacity: 1 },
+        { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + 80}px) rotate(${Math.random() * 720}deg)`, opacity: 0 },
+      ], { duration: 900 + Math.random() * 500, easing: "cubic-bezier(.2,.7,.3,1)" }).onfinish = () => p.remove();
+    }
+  }
+  $$(".pill, .btn").forEach(b => b.addEventListener("click", () => {
+    if (b.classList.contains("copied") || b.dataset.copy !== undefined || b.id === "copyNick") confetti(b);
+  }));
+
+  // parallax on scroll
+  const par = $$(".parallax");
+  if (!reduce) addEventListener("scroll", () => {
+    par.forEach(el => {
+      const r = el.getBoundingClientRect();
+      const offset = (r.top + r.height / 2 - innerHeight / 2) * (+el.dataset.speed || .1);
+      el.style.transform = `translateY(${-offset}px)`;
+    });
+  }, { passive: true });
+
+  // stat bump on hover
+  $$(".stat").forEach(s => s.addEventListener("pointerenter", () => {
+    s.classList.remove("bump"); void s.offsetWidth; s.classList.add("bump");
+  }));
+
 })();

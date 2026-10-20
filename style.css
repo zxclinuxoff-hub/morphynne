@@ -314,3 +314,75 @@ footer{display:flex;justify-content:space-between;align-items:center;font:500 9p
   *,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .fx,.reveal,.stagger>*{opacity:1;transform:none;filter:none}
 }
+
+/* ================= extra effects ================= */
+/* aurora background */
+.aurora{position:fixed;inset:-20%;z-index:-3;pointer-events:none;filter:blur(70px);opacity:.35}
+.aurora i{position:absolute;width:55vmax;height:55vmax;border-radius:45%;background:var(--red);opacity:.22;animation:aurora 22s ease-in-out infinite}
+.aurora i:nth-child(1){left:-10%;top:-10%}
+.aurora i:nth-child(2){right:-15%;top:30%;animation-duration:28s;animation-direction:reverse;background:var(--red-soft)}
+.aurora i:nth-child(3){left:20%;bottom:-25%;animation-duration:34s;background:var(--red-dim)}
+@keyframes aurora{0%,100%{transform:translate(0,0) rotate(0deg) scale(1);border-radius:45%}33%{transform:translate(8vw,-6vh) rotate(120deg) scale(1.15);border-radius:60%}66%{transform:translate(-6vw,5vh) rotate(240deg) scale(.9);border-radius:38%}}
+
+/* scanlines */
+.scanlines{position:fixed;inset:0;z-index:8;pointer-events:none;opacity:0;transition:opacity .4s;background:repeating-linear-gradient(0deg,rgba(0,0,0,.35) 0 1px,transparent 1px 3px)}
+body.scan .scanlines{opacity:1}
+body.scan:after{content:"";position:fixed;left:0;right:0;height:120px;top:-120px;z-index:8;pointer-events:none;background:linear-gradient(transparent,rgba(var(--accent-rgb),.07),transparent);animation:scanSweep 6s linear infinite}
+@keyframes scanSweep{to{top:110%}}
+
+/* matrix-like rain */
+#rain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .8s}
+body.rain #rain{opacity:.35}
+
+/* fx toggles */
+.fx-toggles{display:flex;gap:6px}
+.fx-btn{font:500 9px var(--mono);letter-spacing:.12em;text-transform:uppercase;padding:6px 8px;border:1px solid #221e20;border-radius:999px;color:var(--soft);background:#0e0c0d;transition:color .3s,border-color .3s,box-shadow .3s}
+.fx-btn:hover{color:var(--red-soft);border-color:var(--red)}
+.fx-btn[aria-pressed="true"]{color:#fff;background:var(--red);border-color:var(--red);box-shadow:0 0 14px var(--red-glow)}
+
+/* shockwave on tap / click */
+.shock-layer{position:fixed;inset:0;z-index:44;pointer-events:none}
+.shock{position:absolute;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;border:1px solid var(--red);box-shadow:0 0 18px var(--red-glow);animation:shock .7s var(--ease) forwards}
+@keyframes shock{to{transform:scale(9);opacity:0}}
+
+/* confetti */
+.confetti{position:fixed;width:7px;height:4px;z-index:70;pointer-events:none;border-radius:1px}
+
+/* avatar morphing blob */
+.avatar-blob{position:absolute;inset:-28px;z-index:-1;background:radial-gradient(circle at 30% 30%,rgba(var(--accent-rgb),.35),rgba(var(--accent-rgb),.05));filter:blur(18px);animation:blob 8s ease-in-out infinite;pointer-events:none}
+@keyframes blob{0%,100%{border-radius:42% 58% 63% 37%/45% 44% 56% 55%;transform:rotate(0)}50%{border-radius:60% 40% 35% 65%/55% 60% 40% 45%;transform:rotate(90deg) scale(1.06)}}
+
+/* parallax */
+.parallax{will-change:transform}
+
+/* holographic card */
+.holo:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;
+  background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.09),transparent 55%),
+  linear-gradient(115deg,transparent 40%,rgba(var(--accent-rgb),.18) 50%,transparent 60%);background-size:100% 100%,250% 100%;animation:holoSweep 6s linear infinite}
+.holo:hover:after{opacity:1}
+@keyframes holoSweep{0%{background-position:0 0,150% 0}100%{background-position:0 0,-150% 0}}
+
+/* scramble text */
+.scramble{font-variant-ligatures:none}
+.scramble .sc{color:var(--red-soft)}
+
+/* glitch on section title hover */
+.section-title:hover .label span:last-child{animation:glitchChar .45s steps(2,end) 1}
+
+/* button ring pulse on hover */
+.pill.primary:hover{animation:ringPulse 1.2s ease-out infinite}
+@keyframes ringPulse{0%{box-shadow:0 0 0 0 var(--red-glow)}100%{box-shadow:0 0 0 14px transparent}}
+
+/* click shake on counters */
+.stat.bump{animation:bump .4s var(--ease)}
+@keyframes bump{40%{transform:scale(1.08) translateY(-3px)}}
+
+@media (prefers-reduced-motion:reduce){.aurora i,.avatar-blob,.holo:after,body.scan:after{animation:none}}
+@media (max-width:440px){
+  .live-label{display:none}
+  .top-right{gap:8px}
+  .fx-toggles{gap:4px}
+  .fx-btn{padding:5px 6px;font-size:8px}
+  .sw{width:12px;height:12px}
+  .mini-brand{font-size:13px;gap:8px}
+}
