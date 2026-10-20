@@ -1,6 +1,6 @@
 # Morphynne
 
-Личная страница. Статический сайт, деплой на Render (Static Site, Publish Directory: `.`).
+Личная страница (статика). Деплой на Render: Static Site, Publish Directory: `.`
 
-Файлы: index.html, style.css, script.js, avatar.jpg, jump.mp3, render.yaml.
-Чтобы поменять трек, замени jump.mp3. Чтобы поменять аву, замени avatar.jpg.
+Файлы: index.html, style.css, script.js, avatar.png (аватар), cover.jpg (обложка трека), jump.mp3 (трек), favicon.png, r/ (короткая ссылка-редирект), render.yaml.
+Чтобы поменять трек: замени jump.mp3 и текст в index.html. Аватар: avatar.png (круглый PNG).
