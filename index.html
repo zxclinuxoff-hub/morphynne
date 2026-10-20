@@ -25,6 +25,9 @@
 <div class="scanlines" aria-hidden="true"></div>
 <div class="progress-line" id="progress" aria-hidden="true"></div>
 <div class="click-layer" id="clickLayer" aria-hidden="true"></div>
+<div class="spotlight" id="spotlight" aria-hidden="true"></div>
+<div class="glitch-slices" id="slices" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
 
 <!-- boot -->
 <div id="boot">
@@ -71,6 +74,7 @@
     <div class="ring r1"></div>
     <div class="ring r2"></div>
     <div class="orbit"><i></i></div>
+    <span class="wave"></span><span class="wave w2"></span><span class="wave w3"></span>
     <button class="avatar-btn" id="avatarBtn" type="button" aria-label="Аватар">
       <img id="tilt" src="avatar.png" alt="Morphynne" width="120" height="120" decoding="async">
     </button>
@@ -121,9 +125,13 @@
   <span>DEVELOPER</span><i>✳</i><span>WEB</span><i>✳</i><span>TELEGRAM</span><i>✳</i><span>LINUX</span><i>✳</i><span>GHOSTSEE</span><i>✳</i><span>CODE</span><i>✳</i>
   <span>DEVELOPER</span><i>✳</i><span>WEB</span><i>✳</i><span>TELEGRAM</span><i>✳</i><span>LINUX</span><i>✳</i><span>GHOSTSEE</span><i>✳</i><span>CODE</span><i>✳</i>
 </div></div>
+<div class="ticker rev" aria-hidden="true"><div class="ticker-track">
+  <span>BUILD</span><i>✳</i><span>BREAK</span><i>✳</i><span>FIX</span><i>✳</i><span>SHIP</span><i>✳</i><span>REPEAT</span><i>✳</i>
+  <span>BUILD</span><i>✳</i><span>BREAK</span><i>✳</i><span>FIX</span><i>✳</i><span>SHIP</span><i>✳</i><span>REPEAT</span><i>✳</i>
+</div></div>
 
 <!-- music -->
-<section class="music reveal" id="music">
+<section class="music reveal neon" id="music">
   <div class="music-top"><span class="eyebrow"><i class="dot-pulse"></i>NOW PLAYING</span><span>MP3 · KAI ANGEL</span></div>
   <div class="cover-row">
     <div class="cover" id="cover"><img src="cover.jpg" alt="Обложка: Kai Angel — Jump" width="480" height="480" loading="lazy" decoding="async"></div>
@@ -145,8 +153,13 @@
     <button class="chip" id="rewBtn" type="button">−10с</button>
     <button class="chip" id="fwdBtn" type="button">+10с</button>
     <button class="chip" id="loopBtn" type="button">повтор</button>
-    <label class="vol">vol <input id="vol" type="range" min="0" max="1" step="0.05" value="0.9"></label>
   </div>
+  <label class="vol-row">
+    <span class="vol-ico" id="volIco">🔊</span>
+    <input id="vol" type="range" min="0" max="1" step="0.01" value="0.9" aria-label="Громкость">
+    <span class="vol-val" id="volVal">90%</span>
+  </label>
+  <p class="ios-note small muted">громкость на iPhone меняется кнопками телефона</p>
   <audio id="audio" preload="metadata" src="jump.mp3"></audio>
 </section>
 
@@ -158,7 +171,7 @@
 <section class="block reveal" id="projects">
   <div class="block-title"><span class="label scramble"><i></i>PROJECTS</span><span class="muted">[ 02 ]</span></div>
 
-  <article class="project spot" id="ghostCard">
+  <article class="project spot neon" id="ghostCard">
     <div class="project-top">
       <div class="project-icon">G<span>✳</span></div>
       <div class="project-info">
@@ -223,7 +236,7 @@
   <a class="link spot" href="https://t.me/morphynne" target="_blank" rel="noopener"><span class="sym">↗</span><span><strong>Telegram</strong><small>@morphynne</small></span><span class="arr">OPEN ↗</span></a>
   <a class="link spot" href="https://t.me/Ghostseebot" target="_blank" rel="noopener"><span class="sym">✳</span><span><strong>Ghostsee Bot</strong><small>@Ghostseebot</small></span><span class="arr">OPEN ↗</span></a>
   <div class="card mood">
-    <div class="card-head"><span>mood</span><span class="muted" id="moodVal">chaos: 42%</span></div>
+    <div class="card-head"><span>настроение · хаос</span><span class="muted" id="moodVal">42%</span></div>
     <input id="mood" type="range" min="0" max="100" value="42" aria-label="Уровень хаоса">
     <p class="muted small" id="moodText">немного хаоса — норма</p>
   </div>

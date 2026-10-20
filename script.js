@@ -5,6 +5,8 @@
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
   const small = innerWidth < 700;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (isIOS) root.classList.add("ios");
   const fx = (el, css) => Object.assign(el.style, css);
 
   $("#year").textContent = new Date().getFullYear();
@@ -62,23 +64,26 @@
     btn.setAttribute("aria-pressed", String(on));
   }
 
-  /* ================= rain (only runs while enabled) ================= */
+  /* ================= rain (transparent trails, visible) ================= */
   const rc = $("#rain"), rctx = rc.getContext("2d");
   const GLYPHS = "01<>/#$%&*+=?✳";
-  let rainOn = false, rainTimer = 0, cols = [];
+  let rainOn = false, rainTimer = 0, cols = [], rainStepSize = 14;
   function rainSize() {
-    rc.width = innerWidth / 2; rc.height = innerHeight / 2; // half-res = cheaper
-    rc.style.width = "100%"; rc.style.height = "100%";
-    cols = Array.from({ length: Math.floor(rc.width / 8) }, () => Math.random() * -rc.height / 8);
+    const s = small ? 1 : 1;
+    rc.width = Math.ceil(innerWidth * s); rc.height = Math.ceil(innerHeight * s);
+    cols = Array.from({ length: Math.ceil(rc.width / rainStepSize) }, () => Math.floor(Math.random() * rc.height / rainStepSize));
   }
   function rainStep() {
-    rctx.fillStyle = "rgba(8,8,8,.18)";
+    rctx.globalCompositeOperation = "destination-out";
+    rctx.fillStyle = "rgba(0,0,0,.16)";
     rctx.fillRect(0, 0, rc.width, rc.height);
-    rctx.font = "7px IBM Plex Mono, monospace";
-    rctx.fillStyle = `rgba(${getComputedStyle(root).getPropertyValue("--rgb").trim()},.85)`;
+    rctx.globalCompositeOperation = "source-over";
+    rctx.font = `${rainStepSize - 2}px IBM Plex Mono, monospace`;
+    rctx.fillStyle = `rgba(${rgb},.9)`;
     for (let i = 0; i < cols.length; i++) {
-      rctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], i * 8, cols[i] * 8);
-      cols[i] = cols[i] * 8 > rc.height && Math.random() > .97 ? 0 : cols[i] + 1;
+      const y = cols[i] * rainStepSize;
+      rctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], i * rainStepSize, y);
+      cols[i] = y > rc.height && Math.random() > .975 ? 0 : cols[i] + 1;
     }
   }
   rainBtn.addEventListener("click", () => {
@@ -86,9 +91,8 @@
     document.body.classList.toggle("rain", rainOn);
     rainBtn.setAttribute("aria-pressed", String(rainOn));
     clearInterval(rainTimer);
-    if (rainOn && !reduce) { rainSize(); rainTimer = setInterval(rainStep, 90); }
+    if (rainOn) { rainSize(); rctx.clearRect(0, 0, rc.width, rc.height); if (!reduce) rainTimer = setInterval(rainStep, 70); }
   });
-  addEventListener("resize", () => { if (rainOn) rainSize(); }, { passive: true });
 
   /* ================= boot ================= */
   const boot = $("#boot"), bootCode = $("#bootCode"), bootBar = $("#bootBar");
@@ -131,7 +135,7 @@
   /* ================= handle letters ================= */
   const handle = $("#handle");
   const hText = handle.textContent;
-  handle.innerHTML = [...hText].map((c, i) => `<span class="ch" style="--i:${i}">${c === "_" ? '<span class="red blink">_</span>' : c}</span>`).join("");
+  handle.innerHTML = [...hText].map((c, i) => `<span class="ch" style="--i:${i}"><b>${c === "_" ? '<span class="red blink">_</span>' : c}</b></span>`).join("");
 
   /* ================= after boot ================= */
   let ran = false;
@@ -448,4 +452,72 @@
     $$(".dock button").forEach(x => x.classList.toggle("on", x === b));
   }));
   $("#toTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+  /* ================= v5 animation pack ================= */
+  // random handle glitch + screen slice flash
+  const slices = $("#slices");
+  const glitchHandle = () => {
+    handle.classList.add("glitching");
+    setTimeout(() => handle.classList.remove("glitching"), 380);
+  };
+  const flashSlices = () => {
+    slices.classList.remove("go"); void slices.offsetWidth; slices.classList.add("go");
+  };
+  function scheduleGlitch() {
+    if (reduce) return;
+    const delay = 4000 + Math.random() * 6000;
+    setTimeout(() => {
+      if (!document.hidden && !document.body.classList.contains("calm")) {
+        glitchHandle();
+        if (Math.random() < .5) flashSlices();
+      }
+      scheduleGlitch();
+    }, delay);
+  }
+  scheduleGlitch();
+  handle.addEventListener("pointerenter", () => { if (fine) glitchHandle(); });
+
+  // spotlight that follows the pointer (desktop)
+  const spot = $("#spotlight");
+  if (fine && !reduce) {
+    let sx = 0, sy = 0, tx = 0, ty = 0, sRaf = 0;
+    addEventListener("pointermove", e => {
+      tx = e.clientX; ty = e.clientY;
+      document.body.classList.add("has-pointer");
+      if (!sRaf) sRaf = requestAnimationFrame(followSpot);
+    }, { passive: true });
+    function followSpot() {
+      sx += (tx - sx) * .18; sy += (ty - sy) * .18;
+      spot.style.transform = `translate(${sx}px,${sy}px)`;
+      sRaf = Math.abs(tx - sx) + Math.abs(ty - sy) > .5 ? requestAnimationFrame(followSpot) : 0;
+    }
+    document.addEventListener("pointerleave", () => document.body.classList.remove("has-pointer"));
+  }
+
+  // pause decorative loops in sections that are off-screen
+  const offIO = new IntersectionObserver(entries => {
+    for (const e of entries) e.target.classList.toggle("off", !e.isIntersecting);
+  }, { rootMargin: "120px 0px" });
+  $$(".music, .block, .ticker, .section-nav").forEach(el => offIO.observe(el));
+
+  // volume: visual track + value + icon
+  const volEl = $("#vol"), volVal = $("#volVal"), volIco = $("#volIco");
+  const paintVol = () => {
+    const v = +volEl.value;
+    volEl.style.setProperty("--p", (v * 100) + "%");
+    volVal.textContent = Math.round(v * 100) + "%";
+    volIco.textContent = v === 0 ? "🔇" : v < .5 ? "🔉" : "🔊";
+    audio.volume = v;
+  };
+  volEl.addEventListener("input", paintVol);
+  paintVol();
+
+  // dock icon pop on tap
+  $$(".dock button").forEach(b => b.addEventListener("click", () => {
+    b.classList.remove("on"); void b.offsetWidth; b.classList.add("on");
+  }));
+
+  // neon/pulse on music play
+  audio.addEventListener("play", () => { document.body.classList.add("is-playing"); });
+  audio.addEventListener("pause", () => document.body.classList.remove("is-playing"));
 })();

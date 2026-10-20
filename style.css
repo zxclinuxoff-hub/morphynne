@@ -9,7 +9,7 @@
 
 *{box-sizing:border-box;margin:0;padding:0}
 html{overflow-x:hidden;scroll-behavior:smooth;scroll-padding-top:20px;background:var(--bg);-webkit-text-size-adjust:100%}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;touch-action:manipulation;-webkit-user-select:text;user-select:text;padding-bottom:96px}
+body{background:transparent;color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;touch-action:manipulation;-webkit-user-select:text;user-select:text;padding-bottom:96px}
 a{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
 button,input{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
@@ -35,7 +35,7 @@ img{max-width:100%;display:block}
 .scanlines{position:fixed;inset:0;z-index:8;pointer-events:none;opacity:0;transition:opacity .4s;background:repeating-linear-gradient(0deg,rgba(0,0,0,.3) 0 1px,transparent 1px 3px)}
 body.scan .scanlines{opacity:1}
 #rain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .8s}
-body.rain #rain{opacity:.32}
+body.rain #rain{opacity:.45}
 body.calm *,body.calm *:before,body.calm *:after{animation-play-state:paused!important}
 body.calm #fx,body.calm #rain{display:none}
 body.calm .glow,body.calm .grid-bg{display:none}
@@ -308,3 +308,142 @@ footer{display:flex;justify-content:space-between;align-items:center;margin-top:
   *,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .fx,.reveal{opacity:1;transform:none}
 }
+
+/* =====================================================================
+   v5 — animation pack (transform/opacity only, pausable offscreen)
+   ===================================================================== */
+@property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+@property --hue{syntax:"<number>";inherits:false;initial-value:0}
+
+/* aurora blobs: no blur filter, just gradients moving */
+.aurora{position:fixed;inset:0;z-index:-3;pointer-events:none;overflow:hidden}
+.aurora i{position:absolute;width:70vmax;height:70vmax;border-radius:50%;
+  background:radial-gradient(circle,rgba(var(--rgb),.16),rgba(var(--rgb),0) 60%);animation:aurora 24s ease-in-out infinite;will-change:transform}
+.aurora i:nth-child(1){left:-25vmax;top:-25vmax}
+.aurora i:nth-child(2){right:-30vmax;top:20vh;animation-duration:30s;animation-direction:reverse;background:radial-gradient(circle,rgba(255,106,130,.12),transparent 60%)}
+.aurora i:nth-child(3){left:10vw;bottom:-40vmax;animation-duration:36s;background:radial-gradient(circle,rgba(142,18,39,.2),transparent 60%)}
+@keyframes aurora{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(12vw,-8vh) scale(1.12)}66%{transform:translate(-8vw,6vh) scale(.92)}}
+
+/* spotlight that follows the pointer (desktop) */
+.spotlight{position:fixed;left:0;top:0;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;pointer-events:none;z-index:-1;
+  background:radial-gradient(circle,rgba(var(--rgb),.13),transparent 62%);opacity:0;transition:opacity .4s}
+body.has-pointer .spotlight{opacity:1}
+@media (hover:none){.spotlight{display:none}}
+
+/* glitch slices: random screen flash */
+.glitch-slices{position:fixed;inset:0;z-index:45;pointer-events:none;opacity:0}
+.glitch-slices.go{animation:slicesGo .32s steps(4) 1}
+.glitch-slices i{position:absolute;left:0;right:0;height:9%;background:rgba(var(--rgb),.25);mix-blend-mode:screen}
+.glitch-slices i:nth-child(1){top:18%}
+.glitch-slices i:nth-child(2){top:52%;height:4%;background:rgba(47,214,255,.2)}
+.glitch-slices i:nth-child(3){top:76%;height:6%;background:rgba(255,106,130,.22)}
+@keyframes slicesGo{
+  0%{opacity:1;transform:translateX(0)}
+  25%{opacity:1;transform:translateX(-14px)}
+  50%{opacity:.6;transform:translateX(10px)}
+  75%{opacity:1;transform:translateX(-4px)}
+  100%{opacity:0;transform:none}}
+
+/* handle: shimmer gradient + per-letter wave + random glitch */
+.handle{color:var(--text)}
+.handle .ch b{color:var(--text);animation:letterWave 3.2s ease-in-out infinite,letterColor 4.4s ease-in-out infinite;animation-delay:calc(var(--i) * .11s),calc(var(--i) * .14s)}
+@keyframes letterColor{0%,100%{color:var(--text)}50%{color:var(--red-soft)}}
+@keyframes shimmer{0%{opacity:1}100%{opacity:1}}
+.handle .ch{display:inline-block;opacity:0;transform:translateY(12px);animation:charIn .6s var(--ease) forwards;animation-delay:calc(var(--i) * 40ms + .25s)}
+@keyframes letterWave{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.handle.glitching .ch b{animation:jitter .36s steps(2,end) 1}
+@keyframes jitter{0%{transform:translate(2px,0);text-shadow:2px 0 var(--red),-2px 0 #3aa0ff}33%{transform:translate(-2px,1px);text-shadow:-2px 0 var(--red),2px 0 #3aa0ff}66%{transform:translate(1px,-1px);text-shadow:none}100%{transform:none;text-shadow:none}}
+
+/* avatar: waves + scanner + orbit trail */
+.wave{position:absolute;inset:18px;border-radius:50%;border:1px solid rgba(var(--rgb),.6);pointer-events:none;animation:wave 3.6s ease-out infinite}
+.wave.w2{animation-delay:1.2s}
+.wave.w3{animation-delay:2.4s}
+@keyframes wave{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.7);opacity:0}}
+.avatar-btn{overflow:hidden}
+.avatar-btn:after{content:"";position:absolute;inset:0;border-radius:50%;background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.22) 50%,transparent 60%);transform:translateX(-120%);animation:scan 4.8s ease-in-out infinite;pointer-events:none}
+@keyframes scan{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.orbit i{animation:orbitPulse 1.6s ease-in-out infinite}
+@keyframes orbitPulse{50%{transform:scale(1.5);opacity:.6}}
+
+/* 3D entrance for cards inside visible blocks */
+.block.in .project,.block.in .link,.block.in .update,.block.in .card{animation:rise3d .9s var(--ease) both}
+.block.in .project:nth-child(2),.block.in .link:nth-child(3),.block.in .update:nth-child(2){animation-delay:.12s}
+.block.in .link:nth-child(4){animation-delay:.24s}
+@keyframes rise3d{from{opacity:0;transform:perspective(800px) rotateX(-18deg) translateY(26px)}to{opacity:1;transform:none}}
+
+/* section title: underline draws in */
+.block-title{position:relative;padding-bottom:10px}
+.block-title:after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,var(--red),transparent);transform:scaleX(0);transform-origin:0 50%;transition:transform 1.1s var(--ease)}
+.block.in .block-title:after{transform:scaleX(1)}
+
+/* neon conic border (animated) */
+.neon{position:relative;isolation:isolate}
+.neon:before{content:"";position:absolute;inset:-1px;border-radius:inherit;z-index:-1;padding:1px;
+  background:conic-gradient(from var(--ang),transparent 0 70%,var(--red) 82%,var(--red-soft) 88%,transparent 96%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  animation:spinAng 5s linear infinite;opacity:.9}
+@keyframes spinAng{to{--ang:360deg}}
+
+/* tags float */
+.tags span{animation:floaty 4.2s ease-in-out infinite}
+.tags span:nth-child(2){animation-delay:.5s}.tags span:nth-child(3){animation-delay:1s}.tags span:nth-child(4){animation-delay:1.5s}
+@keyframes floaty{50%{transform:translateY(-4px)}}
+
+/* status: led ripples */
+.led{position:relative}
+.led:after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--red);animation:wave 2.2s ease-out infinite}
+
+/* buttons: sweep shine + squish */
+.act{overflow:hidden}
+.act:before{content:"";position:absolute;top:0;left:-70%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.22),transparent);transform:skewX(-20deg);animation:sweep 3.6s ease-in-out infinite;pointer-events:none}
+@keyframes sweep{0%,55%{left:-70%}100%{left:130%}}
+.act:not(.primary):before{animation-duration:5.5s}
+
+/* ticker reverse */
+.ticker.rev .ticker-track{animation-direction:reverse;animation-duration:32s;color:#5d5459}
+
+/* stat shimmer */
+.stat{position:relative;overflow:hidden}
+.stat:after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(var(--rgb),.1) 50%,transparent 60%);transform:translateX(-100%);animation:sweep 5s ease-in-out infinite;pointer-events:none}
+.stat:nth-child(2):after{animation-delay:.6s}.stat:nth-child(3):after{animation-delay:1.2s}
+
+/* music: viz glow + cover ring */
+.music .viz span{box-shadow:0 0 10px rgba(var(--rgb),.35)}
+.music.playing .cover{box-shadow:0 0 0 1px rgba(var(--rgb),.5),0 0 40px -6px var(--red-glow)}
+.cover:before{content:"";position:absolute;inset:0;background:conic-gradient(from 0deg,transparent,rgba(var(--rgb),.35),transparent 40%);opacity:0;transition:opacity .4s;animation:spinAng 4s linear infinite;z-index:1;pointer-events:none}
+.music.playing .cover:before{opacity:.8}
+.cover{position:relative}
+
+/* dock: active pop */
+.dock button.on{animation:dockPop .5s var(--ease)}
+@keyframes dockPop{40%{transform:translateY(-4px) scale(1.12)}}
+
+/* vol: full-width, big target */
+.vol-row{display:flex;align-items:center;gap:12px;margin-top:14px;padding:10px 12px;border:1px solid #221e20;border-radius:14px;background:#0d0b0c}
+.vol-ico{font-size:14px;width:20px;text-align:center}
+.vol-row input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:26px;background:transparent;cursor:pointer;touch-action:pan-x}
+.vol-row input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:6px;background:linear-gradient(90deg,var(--red) var(--p,90%),#2a2224 var(--p,90%))}
+.vol-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;margin-top:-8px;box-shadow:0 0 0 4px rgba(var(--rgb),.25),0 0 14px var(--red-glow);transition:transform .2s var(--ease)}
+.vol-row input[type=range]:active::-webkit-slider-thumb{transform:scale(1.2)}
+.vol-row input[type=range]::-moz-range-track{height:6px;border-radius:6px;background:#2a2224}
+.vol-row input[type=range]::-moz-range-progress{height:6px;border-radius:6px;background:var(--red)}
+.vol-row input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:50%;background:#fff;box-shadow:0 0 14px var(--red-glow)}
+.vol-val{font:500 11px var(--mono);color:var(--soft);min-width:38px;text-align:right}
+
+/* chip hover pop */
+.chip{transition:transform .25s var(--ease),color .25s,border-color .25s}
+.chip:hover{transform:translateY(-2px)}
+
+/* calm mode stops everything decorative */
+body.calm .aurora,body.calm .spotlight,body.calm .glitch-slices,body.calm .wave,body.calm .neon:before,body.calm .cover:before,body.calm .act:before,body.calm .stat:after,body.calm .handle{animation:none!important}
+body.calm .handle{background:none;-webkit-text-fill-color:initial;color:var(--text)}
+/* off-screen sections pause their loops */
+.off *{animation-play-state:paused!important}
+
+@media (max-width:600px){
+  .aurora i{width:90vmax;height:90vmax}
+}
+
+/* iOS Safari ignores audio.volume: slider stays visible, note explains */
+.ios-note{display:none;margin-top:10px}
+.ios .ios-note{display:block}
