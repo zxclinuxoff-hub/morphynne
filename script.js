@@ -9,6 +9,8 @@
   if (isIOS) root.classList.add("ios");
   const fx = (el, css) => Object.assign(el.style, css);
 
+  addEventListener("unhandledrejection", e => e.preventDefault());
+  addEventListener("error", e => { if (/audio|play/i.test(e.message || "")) e.preventDefault(); });
   $("#year").textContent = new Date().getFullYear();
 
   /* ================= toast & copy ================= */
@@ -19,12 +21,12 @@
     clearTimeout(tt); tt = setTimeout(() => toast.classList.remove("show"), 1700);
   };
   async function copyText(text) {
-    try { await navigator.clipboard.writeText(text); }
-    catch {
+    try { await navigator.clipboard.writeText(text); return; } catch {}
+    try {
       const ta = document.createElement("textarea");
       ta.value = text; ta.style.cssText = "position:fixed;opacity:0";
       document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
-    }
+    } catch {}
   }
   const flash = btn => { btn.classList.add("copied"); setTimeout(() => btn.classList.remove("copied"), 1100); };
   $("#copyNick").addEventListener("click", async e => {
@@ -93,6 +95,21 @@
     clearInterval(rainTimer);
     if (rainOn) { rainSize(); rctx.clearRect(0, 0, rc.width, rc.height); if (!reduce) rainTimer = setInterval(rainStep, 70); }
   });
+
+  /* ================= stack: python 83%, others random below ================= */
+  const skillEls = $$(".skill");
+  skillEls.forEach(el => {
+    const fixed = el.dataset.fixed;
+    const lvl = fixed ? +fixed : Math.floor(52 + Math.random() * 27); // 52..78, always < 83
+    el.querySelector(".meter i").dataset.level = lvl;
+    el.querySelector("em").textContent = lvl;
+  });
+
+  /* ================= live clock ================= */
+  const clockEl = $("#clock");
+  const pad = n => String(n).padStart(2, "0");
+  const tickClock = () => { const d = new Date(); clockEl.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+  tickClock(); setInterval(tickClock, 1000);
 
   /* ================= boot ================= */
   const boot = $("#boot"), bootCode = $("#bootCode"), bootBar = $("#bootBar");
@@ -308,7 +325,11 @@
   mood.addEventListener("input", updMood); updMood();
 
   /* ================= player ================= */
+
   const audio = $("#audio"), music = $("#music"), playBtn = $("#playBtn");
+  const playAudio = () => { try { const p = audio.play(); if (p && p.catch) p.catch(() => {}); } catch {} };
+  const togglePlay = () => { if (audio.paused) playAudio(); else audio.pause(); };
+
   const bar = $("#bar"), fill = $("#fill"), knob = $("#knob"), cur = $("#cur"), dur = $("#dur");
   const vol = $("#vol"), loopBtn = $("#loopBtn");
   const fmt = s => isFinite(s) ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` : "0:00";
@@ -325,7 +346,7 @@
   audio.addEventListener("play", () => music.classList.add("playing"));
   audio.addEventListener("pause", () => music.classList.remove("playing"));
   audio.addEventListener("ended", () => music.classList.remove("playing"));
-  playBtn.addEventListener("click", () => audio.paused ? audio.play() : audio.pause());
+  playBtn.addEventListener("click", () => togglePlay());
   $("#rewBtn").addEventListener("click", () => audio.currentTime = Math.max(0, audio.currentTime - 10));
   $("#fwdBtn").addEventListener("click", () => audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 10));
   loopBtn.addEventListener("click", () => {
@@ -339,14 +360,14 @@
     const p = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
     if (audio.duration) audio.currentTime = p * audio.duration;
   };
-  bar.addEventListener("pointerdown", e => { seeking = true; bar.setPointerCapture(e.pointerId); seek(e); });
+  bar.addEventListener("pointerdown", e => { seeking = true; try { bar.setPointerCapture(e.pointerId); } catch {} seek(e); });
   bar.addEventListener("pointermove", e => { if (seeking) seek(e); });
   const endSeek = () => seeking = false;
   bar.addEventListener("pointerup", endSeek);
   bar.addEventListener("pointercancel", endSeek);
   addEventListener("keydown", e => {
     if (e.code !== "Space" || /input|textarea/i.test(document.activeElement.tagName)) return;
-    e.preventDefault(); audio.paused ? audio.play() : audio.pause();
+    e.preventDefault(); togglePlay();
   });
 
   /* ================= canvas particles (throttled, pauses when hidden) ================= */
@@ -363,14 +384,14 @@
     cv.width = W * dpr; cv.height = H * dpr;
     cv.style.width = W + "px"; cv.style.height = H + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const n = small ? 16 : 36;
+    const n = small ? 24 : 56;
     pts = Array.from({ length: n }, () => ({
       x: Math.random() * W, y: Math.random() * H,
       vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25, r: Math.random() * 1.4 + .4,
     }));
   }
   let mouse = { x: -999, y: -999 }, lastFrame = 0;
-  const maxDist = small ? 80 : 110;
+  const maxDist = small ? 90 : 130;
   function frame(t) {
     raf = requestAnimationFrame(frame);
     if (t - lastFrame < (small ? 40 : 28)) return; // ~25-35fps cap
@@ -454,28 +475,27 @@
   $("#toTop").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
   /* ================= v5 animation pack ================= */
-  // random handle glitch + screen slice flash
+  // screen slice flash: only on the konami code (keyboard), no random triggers
   const slices = $("#slices");
-  const glitchHandle = () => {
-    handle.classList.add("glitching");
-    setTimeout(() => handle.classList.remove("glitching"), 380);
-  };
   const flashSlices = () => {
     slices.classList.remove("go"); void slices.offsetWidth; slices.classList.add("go");
   };
+  // random nickname glitch at unpredictable moments
+  const glitchHandle = () => {
+    handle.classList.add("glitching");
+    setTimeout(() => handle.classList.remove("glitching"), 420);
+  };
   function scheduleGlitch() {
     if (reduce) return;
-    const delay = 4000 + Math.random() * 6000;
     setTimeout(() => {
       if (!document.hidden && !document.body.classList.contains("calm")) {
         glitchHandle();
-        if (Math.random() < .5) flashSlices();
+        if (Math.random() < .4) flashSlices();
       }
       scheduleGlitch();
-    }, delay);
+    }, 2500 + Math.random() * 7000);
   }
   scheduleGlitch();
-  handle.addEventListener("pointerenter", () => { if (fine) glitchHandle(); });
 
   // spotlight that follows the pointer (desktop)
   const spot = $("#spotlight");
@@ -520,4 +540,34 @@
   // neon/pulse on music play
   audio.addEventListener("play", () => { document.body.classList.add("is-playing"); });
   audio.addEventListener("pause", () => document.body.classList.remove("is-playing"));
+
+  /* ================= final pack ================= */
+  // hover-scramble on block titles
+  $$(".block-title .label").forEach(el => el.addEventListener("pointerenter", () => {
+    if (fine) { const t = el.lastChild; if (t && t.nodeType === 3) scrambleText(el); }
+  }));
+  function scrambleText(el) {
+    if (reduce) return;
+    const node = [...el.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+    if (!node) return;
+    const target = node.__orig || node.textContent; node.__orig = target;
+    let f = 0; const total = 14;
+    const id = setInterval(() => {
+      f++;
+      node.textContent = [...target].map((c, i) => i < f * target.length / total ? c : GLYPHS[(Math.random() * GLYPHS.length) | 0]).join("");
+      if (f >= total) { clearInterval(id); node.textContent = target; }
+    }, 28);
+  }
+  // logo spin on tap
+  $(".mini-brand .logo").addEventListener("click", e => {
+    e.preventDefault();
+    const l = e.currentTarget; l.classList.remove("spin"); void l.offsetWidth; l.classList.add("spin");
+  });
+  // konami re-added (keyboard)
+  const seq = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+  let sp = 0;
+  addEventListener("keydown", e => {
+    if (e.key === seq[sp]) { sp++; if (sp === seq.length) { sp = 0; flashSlices(); say("cheat mode activated 😈"); } }
+    else sp = e.key === seq[0] ? 1 : 0;
+  });
 })();

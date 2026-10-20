@@ -351,7 +351,6 @@ body.has-pointer .spotlight{opacity:1}
 @keyframes shimmer{0%{opacity:1}100%{opacity:1}}
 .handle .ch{display:inline-block;opacity:0;transform:translateY(12px);animation:charIn .6s var(--ease) forwards;animation-delay:calc(var(--i) * 40ms + .25s)}
 @keyframes letterWave{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-.handle.glitching .ch b{animation:jitter .36s steps(2,end) 1}
 @keyframes jitter{0%{transform:translate(2px,0);text-shadow:2px 0 var(--red),-2px 0 #3aa0ff}33%{transform:translate(-2px,1px);text-shadow:-2px 0 var(--red),2px 0 #3aa0ff}66%{transform:translate(1px,-1px);text-shadow:none}100%{transform:none;text-shadow:none}}
 
 /* avatar: waves + scanner + orbit trail */
@@ -447,3 +446,76 @@ body.calm .handle{background:none;-webkit-text-fill-color:initial;color:var(--te
 /* iOS Safari ignores audio.volume: slider stays visible, note explains */
 .ios-note{display:none;margin-top:10px}
 .ios .ios-note{display:block}
+
+/* =====================================================================
+   final pack
+   ===================================================================== */
+.clock{font:500 10px var(--mono);letter-spacing:.08em;color:var(--soft);font-variant-numeric:tabular-nums;margin-left:auto;margin-right:10px;transition:color .3s}
+.clock:hover{color:var(--red-soft)}
+.mini-brand .logo.spin{animation:logoSpin .8s var(--ease)}
+@keyframes logoSpin{to{transform:rotate(360deg)}}
+@media (max-width:440px){.clock{display:none}}
+
+/* stack: sheen runs across filled bars */
+.meter i{position:relative;overflow:hidden}
+.meter i:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-100%);animation:meterSheen 2.8s ease-in-out infinite}
+@keyframes meterSheen{60%,100%{transform:translateX(100%)}}
+.skill[data-skill="Python"] em{color:var(--red-soft)}
+.skill[data-skill="Python"] span{color:var(--text);font-weight:700}
+
+/* project icon: orbiting dot */
+.project-icon{position:relative}
+.project-icon:after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px dashed rgba(var(--rgb),.35);animation:spin 10s linear infinite}
+
+/* link arrows bounce */
+.arr{display:inline-block;animation:arrBounce 2.2s ease-in-out infinite}
+@keyframes arrBounce{0%,100%{transform:translate(0,0)}50%{transform:translate(3px,-3px)}}
+.link .sym{position:relative}
+.link .sym:after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(var(--rgb),.4);opacity:0;animation:wave 2.6s ease-out infinite}
+
+/* project card hover lift with glow */
+.project:hover{box-shadow:0 18px 40px -22px var(--red-glow)}
+.project,.link,.update,.stat{transition:transform .35s var(--ease),border-color .3s,box-shadow .35s}
+
+/* terminal caret */
+.term-out:after{content:"";display:inline-block;width:7px;height:13px;background:var(--red);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+
+/* konami/alert flash in block titles */
+.block-title .label{transition:color .3s}
+.block-title:hover .label{color:var(--red-soft)}
+
+/* ---------- nickname glitch (random) ---------- */
+.handle.glitching .ch b{animation:jitter .42s steps(2,end) 1}
+@keyframes jitter{
+  0%{transform:translate(3px,0);text-shadow:3px 0 var(--red),-3px 0 #3aa0ff;clip-path:inset(0 0 40% 0)}
+  25%{transform:translate(-3px,1px);text-shadow:-3px 0 var(--red),3px 0 #3aa0ff;clip-path:inset(60% 0 0 0)}
+  50%{transform:translate(2px,-1px);text-shadow:2px 0 #3aa0ff,-2px 0 var(--red);clip-path:none}
+  75%{transform:translate(-1px,0);text-shadow:none;clip-path:inset(20% 0 30% 0)}
+  100%{transform:none;text-shadow:none;clip-path:none}}
+
+/* ---------- blur + bokeh ---------- */
+.bokeh{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.bokeh i{position:absolute;border-radius:50%;background:rgba(var(--rgb),.28);filter:blur(14px);opacity:.55;animation:bokehFloat var(--d,18s) ease-in-out infinite;will-change:transform}
+.bokeh i:nth-child(1){width:90px;height:90px;left:8%;top:18%;--d:17s}
+.bokeh i:nth-child(2){width:46px;height:46px;left:78%;top:12%;--d:13s;animation-delay:-3s}
+.bokeh i:nth-child(3){width:130px;height:130px;left:62%;top:58%;--d:21s;background:rgba(255,106,130,.2)}
+.bokeh i:nth-child(4){width:34px;height:34px;left:22%;top:72%;--d:11s;animation-delay:-5s}
+.bokeh i:nth-child(5){width:70px;height:70px;left:40%;top:30%;--d:19s;animation-delay:-8s;background:rgba(160,107,255,.18)}
+.bokeh i:nth-child(6){width:22px;height:22px;left:90%;top:82%;--d:9s;animation-delay:-2s}
+.bokeh i:nth-child(7){width:58px;height:58px;left:4%;top:90%;--d:15s;animation-delay:-6s}
+.bokeh i:nth-child(8){width:26px;height:26px;left:55%;top:6%;--d:12s;animation-delay:-9s}
+@keyframes bokehFloat{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(28px,-40px) scale(1.15)}
+  66%{transform:translate(-22px,26px) scale(.9)}}
+@media (max-width:600px){.bokeh i:nth-child(n+6){display:none}}
+
+/* blurred fade-in for entering blocks */
+.fx{filter:blur(8px)}
+.fx.in{filter:blur(0)}
+.reveal{filter:blur(6px)}
+.reveal.in{filter:blur(0)}
+.fx,.reveal{transition:opacity .8s var(--ease),transform .8s var(--ease),filter .8s var(--ease)}
+
+/* glow halo that breathes behind the avatar */
+.avatar-wrap:before{content:"";position:absolute;inset:-40px;border-radius:50%;background:radial-gradient(circle,rgba(var(--rgb),.35),transparent 65%);filter:blur(12px);animation:breathe 5s ease-in-out infinite;z-index:-1}
