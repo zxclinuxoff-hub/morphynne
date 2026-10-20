@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080808">
+<meta name="description" content="Morphynne — personal bio, projects and links.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Morphynne — bio">
+<meta property="og:description" content="Цифровая личность / создатель проектов. Код, инструменты и немного хаоса.">
+<meta property="og:image" content="avatar.jpg">
+<title>Morphynne — bio</title>
+<link rel="icon" href="avatar.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>
+  document.documentElement.classList.add('js', 'booting');
+</script>
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<div class="grid-bg" aria-hidden="true"></div>
+<div class="glow-orb" aria-hidden="true"></div>
+
+<!-- Boot intro: code being written -->
+<div id="boot" aria-hidden="true">
+  <div class="boot-inner">
+    <div class="boot-top"><span>morphynne.bio</span><span>boot v2.0</span></div>
+    <pre id="bootCode" class="boot-code"></pre>
+    <div class="boot-bar"><i id="bootBar"></i></div>
+    <span class="boot-skip" data-t="skip">нажми, чтобы пропустить</span>
+  </div>
+</div>
+
+<header class="topline fx" style="--d:0s">
+  <a class="mini-brand" href="#profile">
+    <span class="logo magnetic">m.</span>
+    <span>MORPHYNNE<span class="red blink">_</span></span>
+  </a>
+  <div class="top-right">
+    <span class="live-label"><i></i><span data-t="online">ONLINE</span></span>
+    <button id="lang" class="language ripple-host" type="button" aria-label="Switch language">RU</button>
+  </div>
+</header>
+
+<main>
+<section class="profile-section" id="profile">
+  <div class="profile-meta fx" style="--d:.1s"><span>PERSONAL PAGE</span><span>UA / WEB</span></div>
+
+  <div class="avatar-wrap fx" style="--d:.2s">
+    <div class="avatar-glow"></div>
+    <div class="avatar-ring"></div>
+    <div class="avatar-ring ring-2"></div>
+    <div class="avatar-tilt">
+      <div class="avatar">
+        <img src="avatar.jpg" alt="Morphynne" width="104" height="104" decoding="async">
+      </div>
+    </div>
+    <span class="online-dot"></span>
+  </div>
+
+  <div class="identity fx" style="--d:.3s">
+    <div class="handle" id="handle">MORPHYNNE<span class="red blink">_</span></div>
+    <div class="realname" data-t="tagline">цифровая личность / создатель проектов</div>
+    <p class="bio" data-t="bio">Собираю идеи в проекты. Код, цифровые инструменты и немного хаоса.</p>
+  </div>
+
+  <div class="tags fx stagger" style="--d:.4s"><span>developer</span><span>web</span><span>telegram</span><span>linux</span></div>
+
+  <div class="status-card fx" style="--d:.5s">
+    <div class="status-left">
+      <span class="status-led"></span>
+      <div>
+        <small data-t="currentStatus">СЕЙЧАС</small>
+        <strong><span id="statusText">coding something</span><span class="caret"></span></strong>
+      </div>
+    </div>
+    <span class="status-right">↗ 01</span>
+  </div>
+
+  <div class="profile-actions fx" style="--d:.6s">
+    <a class="pill primary magnetic ripple-host" href="https://t.me/morphynne_official" target="_blank" rel="noreferrer"><span data-t="message">Написать</span><b>↗</b></a>
+    <button class="pill magnetic ripple-host" id="copyNick" type="button"><span data-t="copyNick">Скопировать ник</span><b>⧉</b></button>
+  </div>
+</section>
+
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span>DEVELOPER</span><i>✳</i><span>WEB</span><i>✳</i><span>TELEGRAM</span><i>✳</i><span>LINUX</span><i>✳</i><span>BUILDING</span><i>✳</i><span>CODE</span><i>✳</i>
+    <span>DEVELOPER</span><i>✳</i><span>WEB</span><i>✳</i><span>TELEGRAM</span><i>✳</i><span>LINUX</span><i>✳</i><span>BUILDING</span><i>✳</i><span>CODE</span><i>✳</i>
+  </div>
+</div>
+
+<section class="music-card reveal" id="music">
+  <div class="music-top">
+    <span class="eyebrow"><i class="sound-dot"></i><span data-t="musicLabel">NOW PLAYING</span></span>
+    <span class="music-format">SOUNDCLOUD</span>
+  </div>
+  <div class="eq-row" aria-hidden="true">
+    <i class="equalizer"><b></b><b></b><b></b><b></b><b></b><b></b></i>
+    <span class="eq-label" data-t="trackLabel">ТРЕК</span>
+  </div>
+  <iframe
+    class="sc-frame"
+    title="SoundCloud track"
+    scrolling="no"
+    frameborder="no"
+    allow="autoplay"
+    loading="lazy"
+    src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fon.soundcloud.com%2FF1NIAiTjOTY83yJUvp&color=%23ef2947&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false"></iframe>
+  <a class="sc-open" href="https://on.soundcloud.com/F1NIAiTjOTY83yJUvp" target="_blank" rel="noreferrer"><span data-t="openSC">Открыть в SoundCloud</span><b>↗</b></a>
+</section>
+
+<nav class="section-nav reveal" aria-label="Sections">
+  <a href="#profile" class="active" data-t="navProfile">Profile</a>
+  <a href="#music" data-t="navMusic">Music</a>
+  <a href="#projects" data-t="navProjects">Projects</a>
+  <a href="#updates" data-t="navUpdates">Updates</a>
+  <a href="#links" data-t="navLinks">Links</a>
+</nav>
+
+<section class="content-section reveal" id="projects">
+  <div class="section-title"><span class="label"><i></i><span data-t="projectsLabel">PROJECTS</span></span><span class="count">[ 01 ]</span></div>
+  <article class="project-card spot ripple-host">
+    <div class="project-icon ghost">G<span>✳</span></div>
+    <div class="project-info">
+      <div class="project-name">Ghostsee <span class="project-state" data-t="active">ACTIVE</span></div>
+      <p data-t="ghostDesc">Telegram-инструменты и автоматизация.</p>
+      <div class="chips"><span>TELEGRAM</span><span>BOT</span></div>
+    </div>
+    <a class="round-link" href="https://t.me/Ghostseebot" target="_blank" rel="noreferrer" aria-label="Open Ghostsee">↗</a>
+  </article>
+</section>
+
+<section class="content-section reveal" id="updates">
+  <div class="section-title"><span class="label"><i></i><span data-t="updatesLabel">LATEST UPDATES</span></span><span class="count">[ LOG ]</span></div>
+  <div class="update-list stagger">
+    <article class="update"><time>20.10</time><div><strong data-t="update1">Morphynne bio — первая версия</strong><p data-t="update1p">Новый личный сайт и интерактивный плеер.</p></div><span class="update-mark">NEW</span></article>
+    <article class="update"><time>16.10</time><div><strong>Ghostsee</strong><p data-t="update2p">Работа над Telegram-инструментами продолжается.</p></div><span class="update-mark muted">DEV</span></article>
+  </div>
+</section>
+
+<section class="content-section reveal" id="links">
+  <div class="section-title"><span class="label"><i></i><span data-t="linksLabel">FIND ME</span></span><span class="count">[ 02 ]</span></div>
+  <a class="link-card spot ripple-host" href="https://t.me/morphynne_official" target="_blank" rel="noreferrer"><span class="link-symbol">↗</span><span><strong>Telegram</strong><small>@morphynne_official</small></span><span class="link-arrow">OPEN ↗</span></a>
+  <a class="link-card spot ripple-host" href="https://t.me/Ghostseebot" target="_blank" rel="noreferrer"><span class="link-symbol">✳</span><span><strong>Ghostsee Bot</strong><small>@ghostseebot</small></span><span class="link-arrow">OPEN ↗</span></a>
+</section>
+
+<footer class="reveal">
+  <span class="footer-brand">MORPHYNNE<span class="red">_</span></span>
+  <span>© <span id="year"></span> / <span data-t="footer">BUILT DIFFERENTLY</span></span>
+  <a href="#profile" aria-label="Back to top" class="magnetic">↑</a>
+</footer>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="script.js"></script>
+</body>
+</html>
